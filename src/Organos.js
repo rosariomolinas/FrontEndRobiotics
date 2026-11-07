@@ -413,87 +413,75 @@ setShowToast(true);
   
   </head>
 
-  <div id="divtabpac" class="container text-center ml-2 mb-2">
-            <div class="row mb-12 border-primary">
-                     <div class="col  col-1 text-end border-primary">
-                      &nbsp;
-                     </div>
-              </div>
+  <div id="divtabpac" className="container ms-2 mb-2">
 
-            <div class="row mb-1 border-primary">
-              <div class="col col-1 text-end border-primary">
-                          
-                        Código:
-              </div>
-              <div class="col  col-2 border-primary">
+  <div className="row align-items-center mb-2 mt-3">
+    <label htmlFor="code" className="col-12 col-md-2 col-form-label text-md-end">Código:</label>
+    <div className="col-12 col-md-3">
+      <input type="text" className="form-control" id="code" name="code"
+        onChange={e => setCodigo(e.target.value)} value={codigo} disabled={true} />
+    </div>
+  </div>
 
-                     <input type="text" id="code" name="code" onChange={e => {setCodigo(e.target.value)}} value={codigo}  disabled={true}/> 
-              </div>
-           </div>
-           <div class="row  mb-1 border-primary">
-              <div class="col  col-1 text-end border-primary">
-                     Nombre:
-              </div>
-              <div class="col  col-2 border-primary">
-                     <input type="text" id="nombre" name="nombre" onChange={e => {setNombre(e.target.value)}}  value={nombre} disabled={noteditable}/> 
-              </div>
-            </div>
-            <div class="row  mb-1 border-primary">
-             <div class="col  col-1 text-end border-primary">
-                     Apellido:
-             </div>
-             <div class="col  col-1 border-primary">
+  <div className="row align-items-center mb-2">
+    <label htmlFor="nombre" className="col-12 col-md-2 col-form-label text-md-end">Nombre:</label>
+    <div className="col-12 col-md-3">
+      <input type="text" className="form-control" id="nombre" name="nombre"
+        onChange={e => setNombre(e.target.value)} value={nombre} disabled={noteditable} />
+    </div>
+  </div>
 
-                     <input type="text" id="apellido" name="apellido" onChange={e => {setApellido(e.target.value)}}  value={apellido} disabled={noteditable}/> 
-             </div>
-             </div>
-             <div class="row mb-1 border-primary">
-                <div class="col  col-1 text-end border-primary">
-                     Edad:
-                </div>
-               <div class="col  col-2 border-primary">
-                     <input type="text" id="edad" name="edad" onChange={e => {setEdad(e.target.value)}}  value={edad} disabled={noteditable}/> 
-              </div>
-              <div class="col  col-1 text-end border-primary">
-                     Activo:
-                     </div>
-                     <div class="col  col-1 text-start border-primary">
-                     <input type="checkbox" id="activo" name="activo"  checked={activo} disabled={true}/> 
-                     </div>
-                     </div>
-             <div class="row mb-12 border-primary">
-                     <div class="col  col-1 text-end border-primary">
-                      &nbsp;
-                     </div>
-              </div>
+  <div className="row align-items-center mb-2">
+    <label htmlFor="apellido" className="col-12 col-md-2 col-form-label text-md-end">Apellido:</label>
+    <div className="col-12 col-md-3">
+      <input type="text" className="form-control" id="apellido" name="apellido"
+        onChange={e => setApellido(e.target.value)} value={apellido} disabled={noteditable} />
+    </div>
+  </div>
 
-              <div class="row mb-1 border-primary">
-                     <div class="col  col-1 text-center border-primary">
+  <div className="row align-items-center mb-2">
+    <label htmlFor="edad" className="col-12 col-md-2 col-form-label text-md-end">Edad:</label>
+    <div className="col-12 col-md-3">
+      <input type="text" className="form-control" id="edad" name="edad"
+        onChange={e => setEdad(e.target.value)} value={edad} disabled={noteditable} />
+    </div>
+    <div className="col-12 col-md-2 mt-2 mt-md-0">
+      <div className="form-check">
+        <input type="checkbox" className="form-check-input" id="activo" name="activo"
+          checked={activo} disabled={true} readOnly />
+        <label className="form-check-label" htmlFor="activo">Activo</label>
+      </div>
+    </div>
+  </div>
 
-                       <button type="button" class="btn btn-primary" id="find" onClick={handleSearchShow} disabled={!noteditable} >Buscar</button>
-                     </div>
-                     <div class="col  col-1 text-center border-primary">
-                       <button type="button" class="btn btn-primary"  id="clear" onClick={handleNew} disabled={!noteditable} >Nuevo</button>
-                     </div>
+  <div className="row g-2 mt-3">
+    <div className="col-6 col-md-auto">
+      <button type="button" className="btn btn-primary w-100" id="find"
+        onClick={handleSearchShow} disabled={!noteditable}>Buscar</button>
+    </div>
+    <div className="col-6 col-md-auto">
+      <button type="button" className="btn btn-primary w-100" id="clear"
+        onClick={handleNew} disabled={!noteditable}>Nuevo</button>
+    </div>
+    <div className="col-6 col-md-auto">
+      <button type="button" className="btn btn-primary w-100" id="edit"
+        onClick={handleEdit} disabled={!codigo}>Editar</button>
+    </div>
+    <div className="col-6 col-md-auto">
+      <button type="button" className="btn btn-danger w-100" id="remove"
+        onClick={handleRemove} disabled={!codigo}>Eliminar</button>
+    </div>
+    <div className="col-6 col-md-auto">
+      <button type="button" className="btn btn-success w-100" id="grabar"
+        onClick={handleSave} disabled={noteditable}>Guardar</button>
+    </div>
+    <div className="col-6 col-md-auto">
+      <button type="button" className="btn btn-secondary w-100" id="cancelar"
+        onClick={handleCancel} disabled={noteditable}>Cancelar</button>
+    </div>
+  </div>
 
-                     <div class="col  col-1 text-center border-primary">
-                     <button type="button" class="btn btn-primary" id="edit" onClick={handleEdit} disabled={!codigo}>Editar</button>
-                     </div>
-                     <div class="col  col-1 text-center border-primary">
-                     <button type="button" class="btn btn-primary"  id="remove" onClick={handleRemove} disabled={!codigo}>Eliminar</button>
-                     </div>
-
-                     <div class="col  col-1 text-center border-primary">
-                     <button type="button" class="btn btn-primary" id="grabar" onClick={handleSave} disabled={noteditable}>Guardar</button>
-                     </div>
-                     <div class="col  col-1 text-center border-primary">
-                     <button type="button" class="btn btn-primary" id="cancelar" onClick={handleCancel} disabled={noteditable}>Cancelar</button>
-                     </div>
-
-
-              </div>
-
-       </div>
+</div>
 
 
 
