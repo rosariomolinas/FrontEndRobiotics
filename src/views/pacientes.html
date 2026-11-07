@@ -1,0 +1,531 @@
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <script src="public/functions/jquery.js"></script>
+	<script src="public/functions/jquery-ui.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+  <link rel="stylesheet" href="./public/css/stylePac.css">
+  
+  <title>Robiotics</title>
+</head>
+
+<body>
+  
+ 
+
+  <div id="includeheader"></div>
+  <div id="includemenu"></div>
+ 
+<form id="FORMDATA">
+    Código:
+<input type="text" id="code" name="code" disabled="true"> 
+<br>
+<br>
+
+Nombre:
+<input type="text" id="nombre" name="nombre" > 
+  Apellido:
+<input type="text" id="apellido" name="apellido" > 
+<br>
+<br>
+Edad:
+<input type="text" id="edad" name="edad"> 
+
+
+
+</form>
+<button id="find" onclick="searchShow()" >Buscar</button>
+<button id="clear" onclick="clearFields()" >Nuevo</button>
+<button id="add" onclick="add()" >Alta</button>
+<button id="previous" onclick="previous()" >Anterior</button>
+<button id="next" onclick="next()" >Siguiente</button>
+<button id="update" onclick="update()" >Modificar</button>
+<button id="remove" onclick="remove()" >Eliminar</button>
+
+
+<!-- Ventana de búsqueda de pacientes //  add show d-block to the class for the modal login to show up -->
+
+<div class="modal fade " id="pacSearchModal" data-show="true" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="false">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModalLabel">Buscar paciente:</h5>
+        
+      </div>
+          <div id="loginModalBody" class="modal-body">
+              <div class="form-group">
+                  <label for="InputCode">Código :</label>
+                  <input type="text" class="form-control" id="inpCode" aria-describedby="emailHelp" placeholder="">
+              </div>
+              <div class="form-group">
+                  <label for="InputNombre">Nombre y Apellido:</label>
+                  <input type="text" class="form-control" id="inpNombre" placeholder="">
+              </div>
+              <div class="form-group">
+                <label for="InputActivo">Incluir inactivos</label>
+                <input type="checkbox" class="form-check-input" id="inpActivo" placeholder="">
+            </div>
+              <div class="form-group text-danger">
+                  <label id="log_message"></label>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary"   onclick="searchClose()" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" id="btnconfirm" data-bs-confirm="" onclick="searchPac()" class="btn btn-primary">Buscar</button>
+          </div>
+          <div id="divtabpac" class="container text-center">
+            <div class="row align-items-start ">
+              <div class="col bg-info col-2 borde">
+                Código
+              </div>
+              <div class="col bg-info col-5 borde">
+                Nombre
+              </div>
+              <div class="col bg-info col-5 borde">
+                Apellido
+              </div>
+            </div>
+            
+          </div>
+
+
+    </div>
+  </div>
+</div>  
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="liveToastmsg" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+
+    <div class="toast-body">
+      
+    </div>
+  </div>
+</div>
+</body>
+    
+<script>
+
+
+/* Cerrar / cancelar ventana de búsqueda */add
+function searchClose()
+{
+  ventana = $("#pacSearchModal")[0];
+  ventana.className= ventana.className.replace("show d-block", "") ;
+
+}
+
+/* cuando se hace click sobre alguno de los pacientes de la grilla de búsqueda */
+function pacSelected(t)
+{
+  filas = t.children;
+  for(i=0; i < filas.length; i++)
+  {
+    $('#' + filas[i].getAttribute("name"))[0] .value = filas[i].getAttribute("valor");
+
+  }
+  ventana = $("#pacSearchModal")[0];
+  ventana.className= ventana.className.replace("show d-block", "") ;
+}
+
+/* Abrir ventana de búsqueda */
+function searchShow()
+{
+  $("#inpCode")[0].value = '';
+  $("#inpNombre")[0].value = '';
+  $('#log_message')[0].innerText = '';
+  filas = $("[id^=fila]");
+  for(i=filas.length; i > 0; i--)
+  {
+     filas[i - 1].remove();
+  }
+
+  ventana = $("#pacSearchModal")[0];
+  ventana.className= ventana.className + "show d-block" ;
+
+
+}
+
+/* Ejecutar la búsqueda en el backend y completar la grilla */
+function searchPac()
+{
+
+  codigo = $("#inpCode")[0].value;
+  nombre = $("#inpNombre")[0].value;
+  activo = $("#inpActivo")[0].checked;
+  if (activo)
+   { 
+    msgactivo = '"activo" : false'
+   }
+   else {
+    msgactivo = '"activo" : true'
+   } 
+  
+  if (codigo)
+  {
+    jstring = '{ "code" : "' + codigo +  '", '+ msgactivo +  '}';
+    url = "./robiotics/pac/findcode";
+  }
+  else
+  {
+    if (nombre)
+    {
+      jstring = '{ "nombre" : "' + nombre + '", '+ msgactivo +  '}';
+      url = "./robiotics/pac/findname";
+
+    }
+    else
+    {
+      jstring = '{'+ msgactivo + '}';
+      url = "./robiotics/pac/findall";
+
+    }
+
+  }
+  
+  filas = $("[id^=fila]");
+  for(i=filas.length; i > 0; i--)
+  {
+     filas[i - 1].remove();
+  }
+
+  $.ajax({
+			  url : url,
+			  type : 'POST',
+			  data : jstring,
+        contentType: 'application/json',
+
+			  success : function(json) {
+
+          mensaje = json.message;
+          $('#log_message')[0].innerText = mensaje;
+          json = json.data;
+          tabpac = $("#divtabpac")[0];
+        // json = json.data;
+          for(i=0; i < json.length; i++)
+        {
+          var row = document.createElement("div");
+          row.setAttribute("id", "fila"+i);
+          row.setAttribute("onclick", "pacSelected(this)");
+          row.className="row align-items-start borde";
+          var cell1 = document.createElement("div");
+          cell1.className="col col-1 ";
+          cell1.setAttribute("name", "code");
+          cell1.setAttribute("valor", json[i].code);
+          cell1.innerText =  json[i].code;
+          row.appendChild(cell1);
+          var cell2 = document.createElement("div");
+          cell2.className="col col-5 ";
+          cell2.setAttribute("name", "nombre");
+          cell2.setAttribute("valor", json[i].nombre);
+          cell2.innerText =  json[i].nombre;
+          row.appendChild(cell2);
+          var cell3 = document.createElement("div");
+          cell3.className="col col-5 ";
+          cell3.setAttribute("name", "apellido");
+          cell3.setAttribute("valor", json[i].apellido);
+          cell3.innerText =  json[i].apellido;
+          row.appendChild(cell3);
+          var cell4 = document.createElement("div");
+          cell4.className="col col-1 invisible ";
+          cell4.setAttribute("name", "edad");
+          cell4.setAttribute("valor", json[i].edad);
+          cell4.innerText =  json[i].edad;
+          row.appendChild(cell4);
+          tabpac.appendChild(row);
+
+        }
+        
+        filas = $("[id^=fila]");
+	
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+}
+
+
+function showToastMsg (texto)
+{
+   const toastMessage = document.getElementById('liveToastmsg');
+   toastMessage.children[0].innerText = texto;
+   const toast = new bootstrap.Toast(toastMessage)
+   toast.show()
+
+}
+
+
+function clearFields()
+{
+  $('input').each(function(index,data) {
+    $(this).val('');
+
+  });
+}
+
+function add()
+  {
+   
+    var formObj = $("#FORMDATA");
+    var formData = new FormData(formObj[0]);
+    first = 0;
+    jstring = '{';
+    for (var pair of formData.entries()) 
+    {
+      if (first)
+         jstring = jstring + ', ';
+      console.log(pair[0] + ": " + pair[1]);
+      jstring = jstring +  "\"" + pair[0] + "\" : \"" + pair[1] + "\"";
+      first = 1;
+    }
+    jstring = jstring + '}';
+    console.log(jstring);
+	$.ajax({
+			  url : "./robiotics/pac/addnew",
+			  type : 'POST',
+			  data : jstring,
+        contentType: 'application/json',
+
+			  success : function(json) {
+          $('input').each(function(index,data) {
+    $(this).val(json[this.id]);
+   
+});
+					
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+}
+
+
+  function loadone()
+  {
+   
+    let codigo = prompt("Buscar:", "");
+    jstring = '{ "code" : ' + codigo + '}';
+
+	$.ajax({
+			  url : "./robiotics/pac/findcode",
+			  type : 'POST',
+			  data : jstring,
+        contentType: 'application/json',
+
+			  success : function(json) {
+          $('input').each(function(index,data) {
+            if ($(this)[0].type == 'checkbox')
+          {   
+            $(this).prop('checked', json[this.id]);
+          }
+          else
+          {
+              $(this).val(json[this.id]);
+          } 
+});
+					
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+}
+
+function remove()
+  {
+   
+    first = 0;
+    jstring = '{';
+    inp = $("input")
+    for (i = 0; i < inp.length; i++) 
+    {
+      if (first)
+         jstring = jstring + ', ';
+      console.log(inp[i].name + ": " + inp[i].value);
+      jstring = jstring +  "\"" + inp[i].name + "\" : \"" + inp[i].value + "\"";
+      first = 1;
+    }
+    jstring = jstring + '}';
+    console.log(jstring);
+	$.ajax({
+			  url : "./robiotics/pac/remove",
+			  type : 'POST',
+			  data : jstring,
+        contentType: 'application/json',
+
+			  success : function(json) {
+          mensaje = json.message;
+              json = json.data[0];
+              if (json)
+            {
+              $('input').each(function(index,data) {
+                
+                  $(this).val(json[this.id]);
+              });
+             }
+             else {
+              showToastMsg(mensaje);
+             }
+					
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+}
+
+
+function next()
+  {
+   
+    
+    first = 0;
+    jstring = '{';
+    inp = $("input")
+    for (i = 0; i < inp.length; i++) 
+    {
+      if (first)
+         jstring = jstring + ', ';
+      console.log(inp[i].name + ": " + inp[i].value);
+      jstring = jstring +  "\"" + inp[i].name + "\" : \"" + inp[i].value + "\"";
+      first = 1;
+    }
+    jstring = jstring + '}';
+    console.log(jstring);
+	$.ajax({
+            url : "./robiotics/pac/next",
+            type : 'POST',
+            data : jstring,
+            contentType: 'application/json',
+
+            success : function(json) {
+              mensaje = json.message;
+              json = json.data[0];
+              if (json)
+            {
+              $('input').each(function(index,data) {
+                
+                  $(this).val(json[this.id]);
+              });
+             }
+             else {
+              showToastMsg(mensaje);
+             }
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+}
+
+function previous()
+  {
+   
+    first = 0;
+    jstring = '{';
+    inp = $("input")
+    for (i = 0; i < inp.length; i++) 
+    {
+      if (first)
+         jstring = jstring + ', ';
+      console.log(inp[i].name + ": " + inp[i].value);
+      jstring = jstring +  "\"" + inp[i].name + "\" : \"" + inp[i].value + "\"";
+      first = 1;
+    }
+    jstring = jstring + '}';
+    console.log(jstring);
+	$.ajax({
+			  url : "./robiotics/pac/previous",
+			  type : 'POST',
+			 
+        data : jstring,
+        contentType: 'application/json',
+
+			  success : function(json) {
+          mensaje = json.message;
+              json = json.data[0];
+              if (json)
+            {
+              $('input').each(function(index,data) {
+                
+                  $(this).val(json[this.id]);
+              });
+             }
+             else {
+              showToastMsg(mensaje);
+             }
+					
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+}
+
+function update()
+  {
+   
+    first = 0;
+    jstring = '{';
+    inp = $("input")
+    for (i = 0; i < inp.length; i++) 
+    {
+      if (first)
+         jstring = jstring + ', ';
+      console.log(inp[i].name + ": " + inp[i].value);
+      jstring = jstring +  "\"" + inp[i].name + "\" : \"" + inp[i].value + "\"";
+      first = 1;
+    }
+    jstring = jstring + '}';
+    console.log(jstring);
+	$.ajax({
+			  url : "./robiotics/pac/update",
+			  type : 'POST',
+        data : jstring,
+        contentType: 'application/json',
+
+			  success : function(json) {
+          mensaje = json.message;
+              json = json.data[0];
+              if (json)
+            {
+              $('input').each(function(index,data) {
+                
+                  $(this).val(json[this.id]);
+              });
+             }
+             else {
+              showToastMsg(mensaje);
+             }
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+}
+
+
+
+$(function(){
+      $("#includeheader").load("./header"); 
+      $("#includemenu").load("./menu"); 
+    });
+</script> 
+
+
+</script>    

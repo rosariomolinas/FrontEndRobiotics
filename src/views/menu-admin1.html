@@ -1,0 +1,176 @@
+<head>
+  <link rel="stylesheet" href="./public/css/styleHeader.css">
+</head>
+
+
+<header class="p-3 mb-1 border-bottom">
+  
+  <header>
+    <nav>
+      
+        <ul>
+          <div class="row">
+          <div class="col-1"> 
+            <li><a href="./doctores">DOCTORES</a></li>
+          </div>
+          <div class="col-1">
+            <li><a href="./organos">ORGANOS</a></li>
+          </div>
+          <div class="col-4">
+
+          </div>
+          <div class="col-4">
+            <div class="dropdown text-end color1" id="per">
+                <a href="#" class="d-block link-body-emphasis text-decoration-none dropdown-toggle color1" data-bs-toggle="dropdown" aria-expanded="false">
+                  Usuario
+                </a>         
+                <ul class="dropdown-menu text-small">
+                  <li><a class="dropdown-item" href="./chglogin" >Cambio contraseña</a></li>
+                  <li><hr class="dropdown-divider"></li>
+                  <li><a class="dropdown-item" onclick="logout()"><i class="" onclick="logout()"></i> Cerrar sesión</a></li>
+                </ul>
+            </div>
+          </div>
+          </div>
+        </div>
+        
+        </div>
+        </header>  
+        </ul>
+    </nav>
+</header>
+  <!-- <div class="container text-center">
+    <div class="row">
+      <div class="col-2">
+      <a href="/" class="d-flex align-items-center mb-1 mb-lg-0 link-body-emphasis text-decoration-none">
+        <a href="./pacientes"> <button id="boton">Pacientes </button></a>
+      </a> 
+    </div>
+    <div class="col-2">
+      <a href="/" class="d-flex align-items-center mb-1 mb-lg-0 link-body-emphasis text-decoration-none">
+        <a href="./doctores"> <button id="boton">Médicos </button></a>
+      </a> 
+    </div>
+    <div class="col-2">
+      <a href="/" class="d-flex align-items-center mb-1 mb-lg-0 link-body-emphasis text-decoration-none">
+        <a href="./organos"> <button id="boton">Órganos </button></a>
+    </div>
+    <div class="col-2">
+      <a href="/" class="d-flex align-items-center mb-1 mb-lg-0 link-body-emphasis text-decoration-none">
+        <a href="./intervenciones"> <button id="boton">Intervenciones </button></a>
+    </div>
+  -->
+      
+      
+       <!--<ul class="nav col-12 col-lg-auto me-lg-auto mb-1 justify-content-center mb-md-0"> 
+            <ul class="navbar-nav">   
+              <li><a idq="navlevel3" href="./pacientes"   class="nav-link px-2 link-body-emphasis color1" >Pacientes</a></li>
+              <li><a idq="navlevel3" href="./doctores"   class="nav-link px-2 link-body-emphasiMédicoss color1" ></a></li>
+              <li><a idq="navlevel3" href="./organos"   class="nav-link px-2 link-body-emphasis color1" >Órganos</a></li>
+              <li><a idq="navlevel3" href="./intervenciones"   class="nav-link px-2 link-body-emphasis color1" >Intervenciones</a></li>
+            </ul>
+        
+    -->
+  
+      
+<script>
+
+
+function chglogin()
+{
+   
+  
+    jstring = '{}';
+  
+ 
+   
+	$.ajax({
+			  url : "./robiotics/usuarios/chglogin",
+			  type : 'POST',
+			  
+        data : jstring,
+       
+        contentType: 'application/json',
+
+			  success : function(json) {
+          mensaje = json.message;
+          json = json.data;
+          if (json)
+          { 
+                window.location.href = '/'
+          }
+					
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+
+}
+
+function logout()
+{
+   
+    var object = {};
+ //  formData.forEach(function(value, key){
+ //      object[key] = value;
+ //   });
+ jstring = '{ }';
+   
+	$.ajax({
+			  url : "./robiotics/usuarios/logout",
+			  type : 'POST',
+			  /// processData: false,
+		    /// data: formData, // JSON.stringify(formData), 
+        data : jstring,
+        /// mimeType:'multipart/form-data',
+		    //contentType: 'text/html; charset=UTF-8',
+        /// contentType: false,
+        contentType: 'application/json',
+
+			  success : function(json) {
+          mensaje = json.message;
+          json = json.data;
+          if (json)
+          { 
+                window.location.href = '/'
+          }
+					
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+
+}
+
+
+$(function(){
+
+  jstring = '{}';
+	$.ajax({
+			  url : "./robiotics/usuarios/datos",
+			  type : 'POST',
+			  data : jstring,
+        contentType: 'application/json',
+
+			  success : function(json) {
+          mensaje = json.message;
+          json = json.data;
+          $("#per")[0].children[0].innerText = json.user; 
+					
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+});
+
+
+</script>   

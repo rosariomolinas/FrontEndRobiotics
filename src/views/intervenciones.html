@@ -1,0 +1,876 @@
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <script src="public/functions/jquery.js"></script>
+	<script src="public/functions/jquery-ui.min.js"></script>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous">
+  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+  <title>Robiotics</title>
+  <link rel="stylesheet" href="./public/css/styleInterv.css">
+  <style>
+    .borde {
+      border: 1px solid black;
+    }
+  </style>
+</head>
+
+<body>
+  <script src="https://kit.fontawesome.com/e7616adc48.js" crossorigin="anonymous"></script>
+
+
+  <div id="includeheader"></div>
+  <div id="includemenu"></div>
+  
+  <div class="mb-3">
+    <button class="button mt-2 mb-2 color1" id="find" onclick="searchShow();"><i class="fa-solid fa-find fa-1x color1" ></i>Buscar Paciente</button> 
+    <label for="exampleFormControlInput1" id="nombpaciente" class="form-label"></label>
+   
+  </div>
+
+  
+  <div class="mb-4">
+    <button class="button mt-2 mb-2 color1" id="find" onclick="searchDocShow();"><i class="fa-solid fa-find fa-1x color1" ></i>Buscar Medico</button> 
+    <label for="exampleFormControlInput1" id="nombdoctor" class="form-label"></label>
+   
+  </div>
+
+<label for="intervDate">Fecha Intervención:</label>
+<input id="intervDate" onchange="presupNuevo()" class="form-control" type="date" />
+
+<br>
+<div id="divtabruta" class="container text-center">
+  <div class="row align-items-start ">
+    <div class="col bg-info col-2 borde">
+      Órgano
+    </div>
+    <div class="col bg-info col-2 borde">
+      Tejido
+    </div>
+    <div class="col bg-info col-2 borde">
+      Sangre
+    </div>
+    <div class="col bg-info col-2 borde">
+      Tomografía
+    </div>
+    <div class="col bg-info col-2 borde">
+      Medicación
+    </div>
+    <div class="col bg-info col-2 borde">
+      &nbsp;
+    </div>
+  </div>
+  
+</div>
+
+<br>
+<button id="rutaadd" onclick="rutaadd()" >Ruta +</button>
+<br>
+<button id="rutapresup" onclick="presup()" >Presupuestar</button>
+<br>
+<button id="presupconf" onclick="confirmar()" disabled>Confirmar</button>
+
+<div id="container">
+
+
+</div>
+
+<div class="mb-3">
+  <label for="exampleFormControlInput1" class="form-label">Costo:</label>
+  <label for="exampleFormControlInput1" id="valcosto" class="form-label"></label>
+ 
+</div>
+
+
+<div class="mb-3">
+ 
+  <label for="exampleFormControlInput1" class="form-label">Tiempo:</label>
+  <label for="exampleFormControlInput1" id="valtiempo" class="form-label"></label>
+ 
+</div>
+<div class="form-group text-danger">
+  <label id="err_message"></label>
+</div>
+
+<!-- Ventana de búsqueda de pacientes //  add show d-block to the class for the modal login to show up -->
+
+<div class="modal fade " id="pacSearchModal" data-show="true" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="false">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModalLabel">Buscar paciente:</h5>
+        
+      </div>
+          <div id="loginModalBody" class="modal-body">
+              <div class="form-group">
+                  <label for="InputCode">Código :</label>
+                  <input type="text" class="form-control" id="inpCode" aria-describedby="emailHelp" placeholder="">
+              </div>
+              <div class="form-group">
+                  <label for="InputNombre">Nombre y Apellido :</label>
+                  <input type="text" class="form-control" id="inpNombre" placeholder="">
+              </div>
+              <div class="form-group text-danger">
+                  <label id="log_message"></label>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary"   onclick="searchPacClose()" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" id="btnconfirm" data-bs-confirm="" onclick="searchPac()" class="btn btn-primary">Buscar</button>
+          </div>
+          <div id="divtabpac" class="container text-center">
+            <div class="row align-items-start ">
+              <div class="col bg-info col-2 borde">
+                Código
+              </div>
+              <div class="col bg-info col-5 borde">
+                Nombre
+              </div>
+              <div class="col bg-info col-5 borde">
+                Apellido
+              </div>
+            </div>
+            
+          </div>
+
+
+    </div>
+  </div>
+</div>  
+
+
+<!-- Ventana de búsqueda de doctores //  add show d-block to the class for the modal login to show up -->
+
+<div class="modal fade " id="docSearchModal" data-show="true" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="false">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="confirmModalLabel">Buscar doctor:</h5>
+        
+      </div>
+          <div id="loginModalBody" class="modal-body">
+              <div class="form-group">
+                  <label for="InputCode">Código :</label>
+                  <input type="text" class="form-control" id="inpDocCode" aria-describedby="emailHelp" placeholder="">
+              </div>
+              <div class="form-group">
+                  <label for="InputNombre">Nombre y Apellido :</label>
+                  <input type="text" class="form-control" id="inpDocNombre" placeholder="">
+              </div>
+              <div class="form-group text-danger">
+                  <label id="log_docmessage"></label>
+              </div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-primary"   onclick="searchDocClose()" data-bs-dismiss="modal">Cancelar</button>
+            <button type="button" id="btnconfirm" data-bs-confirm="" onclick="searchDoc()" class="btn btn-primary">Buscar</button>
+          </div>
+          <div id="divtabdoc" class="container text-center">
+            <div class="row align-items-start ">
+              <div class="col bg-info col-2 borde">
+                Código
+              </div>
+              <div class="col bg-info col-5 borde">
+                Nombre
+              </div>
+              <div class="col bg-info col-5 borde">
+                Apellido
+              </div>
+            </div>
+            
+          </div>
+
+
+    </div>
+  </div>
+</div>  
+
+
+
+
+<div class="toast-container position-fixed bottom-0 end-0 p-3">
+  <div id="intervToastmsg" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+
+    <div class="toast-body">
+      
+    </div>
+  </div>
+</div>
+
+</body>
+    
+<script>
+
+
+
+function showToastMsg (texto)
+{
+   const toastMessage = document.getElementById('intervToastmsg');
+   toastMessage.children[0].innerText = texto;
+   const toast = new bootstrap.Toast(toastMessage)
+   toast.show()
+
+}
+/* PACIENTES */
+/* Cerrar / cancelar ventana de búsqueda */
+function searchPacClose()
+{
+  ventana = $("#pacSearchModal")[0];
+  ventana.className= ventana.className.replace("show d-block", "") ;
+
+}
+
+/* cuando se hace click sobre alguno de los pacientes de la grilla de búsqueda */
+function pacSelected(t)
+{
+  filas = t.children;
+
+  $('#nombpaciente')[0].innerText=  filas[1].getAttribute("valor") + " " + filas[2].getAttribute("valor");
+  $('#nombpaciente')[0].setAttribute ("code", filas[0].getAttribute("valor") );
+  ventana = $("#pacSearchModal")[0];
+  ventana.className= ventana.className.replace("show d-block", "") ;
+}
+
+/* Abrir ventana de búsqueda */
+function searchShow()
+{
+  presupNuevo();
+  $("#inpCode")[0].value = '';
+  $("#inpNombre")[0].value = '';
+  $('#log_message')[0].innerText = '';
+  filas = $("[id^=pacfila]");
+  for(i=filas.length; i > 0; i--)
+  {
+     filas[i - 1].remove();
+  }
+
+  ventana = $("#pacSearchModal")[0];
+  ventana.className= ventana.className + "show d-block" ;
+
+
+}
+
+/* Ejecutar la búsqueda en el backend y completar la grilla */
+function searchPac()
+{
+
+  codigo = $("#inpCode")[0].value;
+  nombre = $("#inpNombre")[0].value;
+  
+  if (codigo)
+  {
+    jstring = '{ "code" : "' + codigo +  '"}';
+    url = "./robiotics/pac/findcode";
+  }
+  else
+  {
+    if (nombre)
+    {
+      jstring = '{ "nombre" : "' + nombre + '"}';
+      url = "./robiotics/pac/findname";
+
+    }
+
+  }
+  
+  filas = $("[id^=pacfila]");
+  for(i=filas.length; i > 0; i--)
+  {
+     filas[i - 1].remove();
+  }
+
+  $.ajax({
+			  url : url,
+			  type : 'POST',
+			  data : jstring,
+        contentType: 'application/json',
+
+			  success : function(json) {
+
+          mensaje = json.message;
+          $('#log_message')[0].innerText = mensaje;
+          json = json.data;
+          tabpac = $("#divtabpac")[0];
+        // json = json.data;
+          for(i=0; i < json.length; i++)
+        {
+          var row = document.createElement("div");
+          row.setAttribute("id", "pacfila"+i);
+          row.setAttribute("onclick", "pacSelected(this)");
+          row.className="row align-items-start borde";
+          var cell1 = document.createElement("div");
+          cell1.className="col col-1 ";
+          cell1.setAttribute("name", "code");
+          cell1.setAttribute("valor", json[i].code);
+          cell1.innerText =  json[i].code;
+          row.appendChild(cell1);
+          var cell2 = document.createElement("div");
+          cell2.className="col col-5 ";
+          cell2.setAttribute("name", "nombre");
+          cell2.setAttribute("valor", json[i].nombre);
+          cell2.innerText =  json[i].nombre;
+          row.appendChild(cell2);
+          var cell3 = document.createElement("div");
+          cell3.className="col col-5 ";
+          cell3.setAttribute("name", "apellido");
+          cell3.setAttribute("valor", json[i].apellido);
+          cell3.innerText =  json[i].apellido;
+          row.appendChild(cell3);
+          var cell4 = document.createElement("div");
+          cell4.className="col col-1 invisible ";
+          cell4.setAttribute("name", "edad");
+          cell4.setAttribute("valor", json[i].edad);
+          cell4.innerText =  json[i].edad;
+          row.appendChild(cell4);
+          tabpac.appendChild(row);
+
+        }
+        
+        filas = $("[id^=pacfila]");
+	
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+}
+
+
+
+/* DOCTORES */
+/* Cerrar / cancelar ventana de búsqueda */
+function searchDocClose()
+{
+  ventana = $("#docSearchModal")[0];
+  ventana.className= ventana.className.replace("show d-block", "") ;
+
+}
+
+/* cuando se hace click sobre alguno de los pacientes de la grilla de búsqueda */
+function docSelected(t)
+{
+  filas = t.children;
+  $('#nombdoctor')[0].innerText=  filas[1].getAttribute("valor") + " " + filas[2].getAttribute("valor");
+  $('#nombdoctor')[0].setAttribute ("code", filas[0].getAttribute("valor") );
+  ventana = $("#docSearchModal")[0];
+  ventana.className= ventana.className.replace("show d-block", "") ;
+}
+
+/* Abrir ventana de búsqueda */
+function searchDocShow()
+{
+  presupNuevo();
+  $("#inpDocCode")[0].value = '';
+  $("#inpDocNombre")[0].value = '';
+  $('#log_docmessage')[0].innerText = '';
+  filas = $("[id^=docfila]");
+  for(i=filas.length; i > 0; i--)
+  {
+     filas[i - 1].remove();
+  }
+
+  ventana = $("#docSearchModal")[0];
+  ventana.className= ventana.className + "show d-block" ;
+
+
+}
+
+/* Ejecutar la búsqueda en el backend y completar la grilla */
+function searchDoc()
+{
+
+  codigo = $("#inpDocCode")[0].value;
+  nombre = $("#inpDocNombre")[0].value;
+  
+  if (codigo)
+  {
+    jstring = '{ "code" : "' + codigo +  '"}';
+    url = "./robiotics/doctor/findcode";
+  }
+  else
+  {
+    if (nombre)
+    {
+      jstring = '{ "nombre" : "' + nombre + '"}';
+      url = "./robiotics/doctor/findname";
+
+    }
+
+  }
+  
+  filas = $("[id^=docfila]");
+  for(i=filas.length; i > 0; i--)
+  {
+     filas[i - 1].remove();
+  }
+
+  $.ajax({
+			  url : url,
+			  type : 'POST',
+			  data : jstring,
+        contentType: 'application/json',
+
+			  success : function(json) {
+
+          mensaje = json.message;
+          $('#log_docmessage')[0].innerText = mensaje;
+          json = json.data;
+          tabpac = $("#divtabdoc")[0];
+        // json = json.data;
+          for(i=0; i < json.length; i++)
+        {
+          var row = document.createElement("div");
+          row.setAttribute("id", "docfila"+i);
+          row.setAttribute("onclick", "docSelected(this)");
+          row.className="row align-items-start borde";
+          var cell1 = document.createElement("div");
+          cell1.className="col col-1 ";
+          cell1.setAttribute("name", "code");
+          cell1.setAttribute("valor", json[i].code);
+          cell1.innerText =  json[i].code;
+          row.appendChild(cell1);
+          var cell2 = document.createElement("div");
+          cell2.className="col col-5 ";
+          cell2.setAttribute("name", "nombre");
+          cell2.setAttribute("valor", json[i].nombre);
+          cell2.innerText =  json[i].nombre;
+          row.appendChild(cell2);
+          var cell3 = document.createElement("div");
+          cell3.className="col col-5 ";
+          cell3.setAttribute("name", "apellido");
+          cell3.setAttribute("valor", json[i].apellido);
+          cell3.innerText =  json[i].apellido;
+          row.appendChild(cell3);
+          var cell4 = document.createElement("div");
+          cell4.className="col col-1 invisible ";
+          cell4.setAttribute("name", "edad");
+          cell4.setAttribute("valor", json[i].edad);
+          cell4.innerText =  json[i].edad;
+          row.appendChild(cell4);
+          tabpac.appendChild(row);
+
+        }
+        
+        filas = $("[id^=docfila]");
+	
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+}
+
+
+function presup()
+{
+  /* Validate */
+  presupValido = true;
+  /* 0 - Cargar Paciente, doctor y fechas */
+  $('#err_message')[0].innerHTML = '';
+  nombPac = $('#nombpaciente')[0].innerHTML;
+  if (! nombPac)
+  {
+    $('#err_message')[0].innerHTML = '<BR>' + 'Ingresar Paciente';
+    presupValido = false;
+  }
+  nombDoc = $('#nombdoctor')[0].innerHTML;
+  if (! nombDoc)
+  {
+    $('#err_message')[0].innerHTML = $('#err_message')[0].innerHTML + '<BR>' + 'Ingresar Médico';
+    presupValido = false;
+  }
+
+
+  fecInterv = $("#intervDate")[0].value
+  if (! fecInterv.localeCompare(''))
+  {
+    $('#err_message')[0].innerHTML = $('#err_message')[0].innerHTML + '<BR>' + 'Completar Fecha de Intervención';
+    presupValido = false;
+  }
+
+  /* 1 - Organos repetidos */
+  /* 2 - Máximo 2 medicamentos */
+ 
+  valido = true;
+  cantMed = 0;
+  cost_total = 0;
+  tiempo_total = 0;
+  vorg = $("[id^=selOrgano]");
+  vfilas = $("[id^=presfila]");
+  repOrg = [];
+
+  if ( vfilas.length < 1)
+  {
+    $('#err_message')[0].innerHTML = $('#err_message')[0].innerHTML + '<BR>' + 'Al menos cargar un órgano en la ruta';
+    presupValido = false;
+  }
+  for(i=0; i<vorg.length; i++)
+ { 
+   if (repOrg.includes(vorg[i].value))
+   {
+      valido = false
+    }
+    repOrg.push(vorg[i].value);   
+
+    /* tejido */
+    if (vfilas[i].children[1].children[0].checked)
+    {
+      cost_total = cost_total + listValores.tejido_costo;
+      tiempo_total = tiempo_total = + listValores.tejido_tiempo;
+    }
+    /* sangre */
+    if (vfilas[i].children[2].children[0].checked)
+    {
+      cost_total = cost_total + listValores.sangre_costo;
+      tiempo_total = tiempo_total = + listValores.sangre_tiempo;
+    }
+    /* tomografía */
+    if (vfilas[i].children[3].children[0].checked)
+        {
+          cost_total = cost_total + listValores.tomo3d_costo;
+          tiempo_total = tiempo_total = + listValores.tomo3d_tiempo;
+
+    }
+   /* contar medicamentos */
+   if (! (vfilas[i].children[4].children[0].value === '0'))
+   {
+     cantMed ++
+
+   }
+
+ }
+
+ if (! valido)
+  {
+    $('#err_message')[0].innerHTML = $('#err_message')[0].innerHTML + '<BR>' + 'Órganos repetidos';
+    presupValido = false;
+  }
+ if (cantMed > 2)
+  {
+    $('#err_message')[0].innerHTML = $('#err_message')[0].innerHTML + '<BR>' + 'Máximo 2 medicamentos';
+    presupValido = false;
+  }
+ $("#valcosto")[0].innerText = cost_total;
+ $("#valtiempo")[0].innerText = tiempo_total;
+ 
+ /* Si el resupuesto es válido, habilitar el boton de registrar */
+ if ( presupValido ) {
+    
+  $("#presupconf")[0].disabled = false
+ }
+
+
+}
+
+function confirmar()
+{
+  codePac = $('#nombpaciente')[0].getAttribute("code");
+  codeDoc = $('#nombdoctor')[0].getAttribute("code");
+  fechInt =  $("#intervDate")[0].value;
+  vfilas = $("[id^=presfila]");
+
+  vcosto = $("#valcosto")[0].innerText;
+  vtiempo = $("#valtiempo")[0].innerText;
+  
+  
+
+  // setAttribute ("code", filas[0].getAttribute("valor") );
+  jstring = '{"paciente" : ' + codePac + ', "doctor" : ' + codeDoc + ', "fecint" : "' + fechInt + '" , "costo" : ' + vcosto + ', "tiempo" : ' + vtiempo + ', "ruta" : [' ;
+  //{"organo" : 3, "mtejido" : true}, {"organo" : 1, "mtejido" : false}] }'
+  for(i=0; i < vfilas.length; i++)
+  {
+    if (i)
+    {  
+      jstring = jstring + ', '
+    };
+    jstring = jstring + '{ "organo" : ' + vfilas[i].children[0].children[0].value + ', "mtejido" : ' + vfilas[i].children[1].children[0].checked + 
+                             ', "msangre" : ' + vfilas[i].children[2].children[0].checked  + 
+                             ', "tomo3d"  : ' + vfilas[i].children[3].children[0].checked  + 
+                             ', "medica" :  ' +  vfilas[i].children[4].children[0].value + '}'
+
+  }
+
+  jstring = jstring + '] }';
+// jstring = '{"uno" : 1}'
+  $.ajax({
+			  url : './robiotics/interv/addnew',
+			  type : 'POST',
+			  data : jstring,
+        contentType: 'application/json',
+
+			  success : function(json) {
+
+          mensaje = json.message;
+          showToastMsg(mensaje);
+          
+	
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+  
+
+
+}
+
+let presupValido = false;
+
+function presupNuevo(){
+  presupValido = false;
+  $("#presupconf")[0].disabled = true;
+  $('#err_message')[0].innerHTML = '';
+  $("#valcosto")[0].innerText = '';
+  $("#valtiempo")[0].innerText = '';
+}
+
+function statuschg(th)
+{
+  presupNuevo();
+/* Buscar el órgano al que se cambió */
+  nuevoOrg = th.parentElement.parentElement.children[0].children[0].value
+  for(i=0; i< listOrganos.length; i++)
+{
+  
+    if(listOrganos[i].code == nuevoOrg) {
+      th.parentElement.parentElement.children[1].children[0].checked = false;
+      th.parentElement.parentElement.children[1].children[0].disabled = ! listOrganos[i].mtejido;
+      th.parentElement.parentElement.children[2].children[0].checked = false;
+      th.parentElement.parentElement.children[2].children[0].disabled = ! listOrganos[i].msangre;
+      th.parentElement.parentElement.children[3].children[0].checked = false;
+      th.parentElement.parentElement.children[3].children[0].disabled = ! listOrganos[i].tomo3d;
+
+    }
+
+  };
+}
+
+function rutaadd()
+{
+   presupNuevo();
+  /* busca los órganos y arma un combo */
+  jstring = '{}';
+    
+	
+
+tabruta = $("#divtabruta")[0];
+//Create a DropDownList element.
+var ddlCustomers = document.createElement("SELECT");
+ddlCustomers.setAttribute("id", "selOrgano");
+ddlCustomers.setAttribute("onchange", "statuschg(this)");
+for(i=0; i< listOrganos.length; i++)
+{
+      //Add the Options to the DropDownList.
+      var option = document.createElement("OPTION");
+
+      //Set Customer Name in Text part.
+      option.innerHTML = listOrganos[i].nombre;
+
+      //Set CustomerId in Value part.
+      option.value = listOrganos[i].code;
+
+      //Add the Option element to DropDownList.
+      ddlCustomers.options.add(option);
+
+}
+
+var row = document.createElement("div");
+row.setAttribute("id", "presfila");
+
+row.className="row align-items-start borde";
+var cell = document.createElement("div");
+cell.className="col col-2 ";
+cell.appendChild(ddlCustomers);
+row.appendChild(cell);
+
+var checkbox = document.createElement('input');
+checkbox.type = 'checkbox';
+checkbox.className = "form-check-input mb-2"
+if (! listOrganos[0].mtejido)
+{
+  checkbox.disabled =true;
+}
+checkbox.checked = false;
+var cell2 = document.createElement("div");
+cell2.className="col col-2 borde ";
+cell2.appendChild(checkbox);
+row.appendChild(cell2);
+
+var checkbox = document.createElement('input');
+checkbox.type = 'checkbox';
+checkbox.className = "form-check-input mb-2"
+if (! listOrganos[0].msangre)
+{
+  checkbox.disabled =true;
+}
+checkbox.checked =false;
+
+var cell3 = document.createElement("div");
+cell3.className="col col-2  borde";
+cell3.appendChild(checkbox);
+row.appendChild(cell3);
+
+var checkbox = document.createElement('input');
+checkbox.type = 'checkbox';
+checkbox.className = "form-check-input mb-2"
+if (! listOrganos[0].tomo3d)
+{
+  checkbox.disabled =true;
+}
+checkbox.checked = false;
+var cell4 = document.createElement("div");
+cell4.className="col col-2  borde";
+cell4.appendChild(checkbox);
+row.appendChild(cell4);
+
+            var ddlMedica = document.createElement("SELECT");
+            var option = document.createElement("OPTION");
+
+            option.innerHTML = "";
+            option.value = 0;
+            ddlMedica.options.add(option);
+            ddlMedica.setAttribute("id", "selMedicamento");
+            for(i=0; i< listMedicamentos.length; i++)
+            {
+                  //Add the Options to the DropDownList.
+                  var option = document.createElement("OPTION");
+
+                  //Set Customer Name in Text part.
+                  option.innerHTML = listMedicamentos[i].nombre;
+
+                  //Set CustomerId in Value part.
+                  option.value = listMedicamentos[i].code;
+
+                  //Add the Option element to DropDownList.
+                  ddlMedica.options.add(option);
+
+            }
+            
+            var cell6 = document.createElement("div");
+            cell6.className="col col-2  ";
+            cell6.appendChild(ddlMedica);
+            row.appendChild(cell6);
+
+            var cell7 = document.createElement("div");
+            cell7.className="col col-2 ";
+            var btn7 = document.createElement("button");
+            btn7.setAttribute("className", "button mt-2 mb-2 color1");
+            btn7.setAttribute("onclick", "removeRow(this)");
+            var t = document.createTextNode("Eliminar");
+            btn7.appendChild(t);
+            cell7.appendChild(btn7);
+            row.appendChild(cell7);
+
+
+            tabruta.appendChild(row);
+  
+
+
+
+
+}
+
+function removeRow(th)
+{
+  presupNuevo();
+  div = th.parentElement.parentElement;
+  div.remove()
+
+}
+
+function clearFields()
+{
+  $('input').each(function(index,data) {
+    $(this).val('');
+
+  });
+}
+
+  function loadonepac()
+  {
+    let codigo = prompt("Buscar paciente:", "");
+    
+    jstring = '{ "code" : ' + codigo + ' }';
+    console.log(jstring);
+	$.ajax({
+			  url : "./robiotics/pac/findcode",
+			  type : 'POST',
+			  /// processData: false,
+		    /// data: formData, // JSON.stringify(formData), 
+        data : jstring,
+        /// mimeType:'multipart/form-data',
+		    //contentType: 'text/html; charset=UTF-8',
+        /// contentType: false,
+        contentType: 'application/json',
+
+			  success : function(json) {
+          $('#nombpaciente')[0].innerText=json.nombre + " " + json.apellido;
+					
+			   },
+			  error : function(xhr, status) {
+					// alert('Disculpe, existió un problema');
+				},
+			  complete : function(xhr, status) {
+			}
+  });
+}
+
+  
+
+
+$(function(){
+      $("#includeheader").load("./header"); 
+      $("#includemenu").load("./menu"); 
+    });
+
+/* load organos y medicamentos */
+listOrganos = {};
+jstring = '{}';
+    
+    $.ajax({
+          url : "./robiotics/org/traertodos",
+          type : 'POST',
+          data : jstring,
+          contentType: 'application/json',
+  
+          success : function(json) {
+          listOrganos = json.lista;
+          listValores = json.valores;
+					
+        },
+       error : function(xhr, status) {
+         // alert('Disculpe, existió un problema');
+       },
+       complete : function(xhr, status) {
+     }
+ });
+
+
+ listMedicamentos = {};
+jstring = '{}';
+    
+    $.ajax({
+          url : "./robiotics/medica/traertodos",
+          type : 'POST',
+          data : jstring,
+          contentType: 'application/json',
+  
+          success : function(json) {
+            listMedicamentos = json;
+					
+        },
+       error : function(xhr, status) {
+         // alert('Disculpe, existió un problema');
+       },
+       complete : function(xhr, status) {
+     }
+ });
+
+
+
+</script>    
