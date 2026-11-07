@@ -1,0 +1,82 @@
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap');
+
+</style>
+
+*{
+    padding: 0%;
+    margin: 0%;
+    box-sizing: border-box;
+}
+
+body{
+    font-family: 'Poppins', sans-serif;
+    background-color: lightcoral;
+    background-image: url(./foto\ fondo\ 3.jpg);
+    color: black;
+    width: 100%;
+    height: 100vh;
+}
+nav{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding-top: 20px;
+    padding-left: 5%;
+    padding-right: 5%;
+    font-weight: bold;
+  }
+h1{
+  font-size: 45px;
+}
+
+ul li {
+    display: inline-block;
+    padding: 0px 20px;
+   }
+
+a{
+    color: purple;
+    text-decoration: none;
+}
+
+a:hover{
+    color: antiquewhite;
+}
+.logop{
+    width: 150px;
+    margin: 0 auto;
+    vertical-align: middle;
+    box-sizing: border-box;
+    border-radius: 60%;
+}
+.buscador{
+    width: 31px;
+    height: 31px;
+    padding: 18px;
+    box-sizing: border-box;
+}
+.container {
+    position: relative;
+}
+input{
+    padding: 10px;
+    padding-right: 35px;
+    border-radius: 5px;
+    outline: none;
+    width: 350px;
+    font-size: 1rem;
+}
+button{
+    width: 31px;
+    height: 31px;
+    padding: 10px 15px;
+    position: absolute;
+    border: 0;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    margin:auto;
+    border-radius: 0 5px 5px 0;
+
+}
