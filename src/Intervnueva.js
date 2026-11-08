@@ -1,1052 +1,699 @@
 // Intervnueva.js
+import React, { useState, useEffect } from "react";
+import Toast from "react-bootstrap/Toast";
+import ToastContainer from "react-bootstrap/ToastContainer";
 
-import { React, useState, useEffect } from "react"
-import Toast from 'react-bootstrap/Toast';
-import ToastContainer from 'react-bootstrap/ToastContainer';
+const API = "http://localhost:8080/robiotics";
 
+// modal de búsqueda reutilizable (pacientes y médicos)
+   
+function ModalBusqueda({
+  id, titulo, visible,
+  codigo, setCodigo, nombre, setNombre,
+  activo, onToggleActivo, mensaje, setMensaje,
+  grilla, onBuscar, onCerrar, onSeleccionar,
+}) {
+  return (
+    <div className={visible ? "modal fade show d-block" : "modal fade"}
+      id={id} tabIndex="-1" role="dialog"
+      aria-labelledby={`${id}Label`} aria-hidden={!visible}>
+      <div className="modal-dialog modal-dialog-scrollable modal-fullscreen-sm-down" role="document">
+        <div className="modal-content">
 
+          <div className="modal-header">
+            <h5 className="modal-title" id={`${id}Label`}>{titulo}</h5>
+            <button type="button" className="btn-close" aria-label="Cerrar" onClick={onCerrar}></button>
+          </div>
 
+          <div className="modal-body">
+            <form onSubmit={(e) => { e.preventDefault(); onBuscar(); }}>
+              <div className="mb-3">
+                <label htmlFor={`${id}Code`} className="form-label">Código:</label>
+                <input type="text" className="form-control" id={`${id}Code`}
+                  value={codigo}
+                  onChange={(e) => { setCodigo(e.target.value); setMensaje(""); }} />
+              </div>
+              <div className="mb-3">
+                <label htmlFor={`${id}Nombre`} className="form-label">Nombre y Apellido:</label>
+                <input type="text" className="form-control" id={`${id}Nombre`}
+                  value={nombre}
+                  onChange={(e) => { setNombre(e.target.value); setMensaje(""); }} />
+              </div>
+              <div className="mb-3 form-check">
+                <input type="checkbox" className="form-check-input" id={`${id}Activo`}
+                  checked={activo} onChange={onToggleActivo} />
+                <label className="form-check-label" htmlFor={`${id}Activo`}>Incluir inactivos</label>
+              </div>
+
+              {mensaje && <div className="text-danger small mb-2">{mensaje}</div>}
+
+              <div className="d-flex justify-content-end gap-2 mb-3">
+                <button type="button" className="btn btn-secondary" onClick={onCerrar}>Cancelar</button>
+                <button type="submit" className="btn btn-primary">Buscar</button>
+              </div>
+            </form>
+
+            <div className="table-responsive">
+              <table className="table table-hover table-sm align-middle mb-0">
+                <thead className="table-info">
+                  <tr>
+                    <th>Código</th>
+                    <th>Nombre</th>
+                    <th>Apellido</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {grilla.length === 0 ? (
+                    <tr>
+                      <td colSpan="3" className="text-center text-muted">Sin resultados</td>
+                    </tr>
+                  ) : (
+                    grilla.map((fila, index) => (
+                      <tr key={fila.code ?? index} style={{ cursor: "pointer" }}
+                        onClick={() => onSeleccionar(index)}>
+                        <td>{fila.code}</td>
+                        <td>{fila.nombre}</td>
+                        <td>{fila.apellido}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// cabecera de c tarjeta (ícono + título + subtítulo)
+function CabeceraTarjeta({ icono, titulo, subtitulo, children }) {
+  return (
+  <div className="card-header border-0 bg-white pt-4 px-4 pb-0">
+    <div className="d-flex align-items-center flex-wrap gap-2">
+      <div className="rounded-3 p-2 me-2 text-white d-flex align-items-center justify-content-center"
+        style={{ backgroundColor: "#0284c7", width: "42px", height: "42px" }}>
+        <i className={`bi ${icono} fs-5`}></i>
+      </div>
+      <div className="me-auto">
+        <h5 className="fw-bold mb-0 text-dark">{titulo}</h5>
+        <small className="text-muted">{subtitulo}</small>
+      </div>
+      {children}
+    </div>
+  </div>
+  );
+}
+
+// pantalla de nueva intervención
 
 const Intervnueva = (props) => {
 
-    const [codpaciente, setCodpaciente] = useState(0)  
-    const [nombpaciente, setNombpaciente] = useState("")  
-    const [noteditable, setNotEditable] = useState(true)
- 
-    const [coddoctor, setCoddoctor] = useState(0)
-    const [nombDoctor, setNombDoctor] = useState("")  
-    const [fechInterv, setFechInterv] = useState("")  
+  // datos intervención 
+  const [codpaciente, setCodpaciente] = useState(0);
+  const [nombpaciente, setNombpaciente] = useState("");
+  const [coddoctor, setCoddoctor] = useState(0);
+  const [nombDoctor, setNombDoctor] = useState("");
+  const [fechInterv, setFechInterv] = useState("");
 
-    // ventana de búsqueda paciente
-    const [vermodal, setVermodal] = useState(false)  
-    const [searchcodigo, setSearchCodigo] = useState("")
-    const [searchnombre, setSearchNombre] = useState("")  
-    const [searchactivo, setSearchActivo] = useState(false)  
-    const [searchgrilla, setSearchGrilla] = useState([])  
-    const [searchMessage, setSearchMessage] = useState("")
+  // búsqueda de paciente
+  const [vermodal, setVermodal] = useState(false);
+  const [searchcodigo, setSearchCodigo] = useState("");
+  const [searchnombre, setSearchNombre] = useState("");
+  const [searchactivo, setSearchActivo] = useState(false);
+  const [searchgrilla, setSearchGrilla] = useState([]);
+  const [searchMessage, setSearchMessage] = useState("");
 
-    // ventana de búsqueda doctor
-    const [vermodalDoc, setVermodalDoc] = useState(false)  
-    const [searchDoccodigo, setSearchDocCodigo] = useState("")
-    const [searchDocnombre, setSearchDocNombre] = useState("")  
-    const [searchDocactivo, setSearchDocActivo] = useState(false)  
-    const [searchDocgrilla, setSearchDocGrilla] = useState([])  
-    const [searchDocMessage, setSearchDocMessage] = useState("")
-    
-    const [listOrganos, setListOrganos] = useState([] )
-    const [orgValores, setOrgValores] = useState([])
-    
-    const [listMedica, setListMedica] = useState([])
-    //{"code" : 1, "nombre" : "corazón"}, {"code" : 2, "nombre" : "pulmón"}, {"code" : 3, "nombre" : "higado"}])
+  // búsqueda de médico
+  const [vermodalDoc, setVermodalDoc] = useState(false);
+  const [searchDoccodigo, setSearchDocCodigo] = useState("");
+  const [searchDocnombre, setSearchDocNombre] = useState("");
+  const [searchDocactivo, setSearchDocActivo] = useState(false);
+  const [searchDocgrilla, setSearchDocGrilla] = useState([]);
+  const [searchDocMessage, setSearchDocMessage] = useState("");
 
-    const [presupErrMessage, setPresupErrMessage] = useState([])
-    const [presupCosto, setPresupCosto] = useState(0)
-    const [presupTiempo, setPresupTiempo] = useState(0)
+  // catálogos
+  const [listOrganos, setListOrganos] = useState([]);
+  const [orgValores, setOrgValores] = useState({});
+  const [listMedica, setListMedica] = useState([]);
 
+  // ruta y presupuesto 
+  const [intervGrilla, setIntervGrilla] = useState([]);
+  const [presupErrMessage, setPresupErrMessage] = useState([]);
+  const [presupCosto, setPresupCosto] = useState(0);
+  const [presupTiempo, setPresupTiempo] = useState(0);
 
-      
+  // toast (ventanita)
+  const [showToast, setShowToast] = useState(false);
+  const [textoToast, setTextoToast] = useState("");
 
-    //const [intervGrilla, setIntervGrilla] = useState({"organo": "corazon", "tejido" : true, "sangre" : true}, {  "organo": "corazon", "tejido" :false, "sangre" : true})  
-    const [intervGrilla, setIntervGrilla] = useState([])  
+  function mostrarToast(texto) {
+    setTextoToast(texto);
+    setShowToast(true);
+  }
 
+  // carga de catálogos
 
-
-    // ventana de confirmación
-    const [vermodalconf, setVermodalConf] = useState(false)  
- 
- // toast
-    const [showToast, setShowToast] = useState(false);
-    const [textoToast, setTextoToast] = useState("");
-    
-    useEffect(() => {
-     
-    var jstring;
-    var url;
-    const params = new URLSearchParams();
-    
-    jstring = '{}';
-            url = "http://localhost:8080/robiotics/org/traertodos";
-
-        /* fetch de búsqueda */
-        /*
-        var options = {
-          method: 'POST',
-          headers: {
-          'Content-Type': 'application/json'
-          },
-          mode: 'cors',
-          credential : 'include',
-          body:  jstring,
-          //JSON.stringify({"code" : 4, "activo" : true}),
-          
-          };
-        */
-        fetch(`${url}?${params}`)
-        .then( response => response.json())
-        .then( data => {
-            console.log("organos", data.lista)
-            if ( data.lista.length)
-            {
-
-              
-              setListOrganos(data.lista);
-
-              setOrgValores(data.valores);
-            }          
-
-
-
-
-
-
-
-
-        })
-
-
-
-
-
-  }, []);
-
-
+  // órganos y valores (costo y tiempo de cada estudio)
   useEffect(() => {
-     
-    var jstring1;
-    var url1;
-    const params = new URLSearchParams();
-    jstring1 = '{}';
-            url1 = "http://localhost:8080/robiotics/medica/traertodos";
-
-        /* fetch de búsqueda */
-        /*
-        var options1 = {
-          method: 'POST',
-          headers: {
-          'Content-Type': 'application/json'
-          },
-          mode: 'cors',
-          credential : 'include',
-          body:  jstring1,
-          //JSON.stringify({"code" : 4, "activo" : true}),
-          
-          };*/
-        
-        fetch(`${url1}?${params}`)
-        .then( response => response.json())
-        .then( data => {
-            console.log(data)
-            if ( data.length)
-            {
-              setListMedica(data);
-              
-            }  
-          })
-
-
-
-
+    fetch(`${API}/org/traertodos`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (Array.isArray(data.lista) && data.lista.length) {
+          setListOrganos(data.lista);
+          setOrgValores(data.valores || {});
+        }
+      })
+      .catch((error) => console.error("Error cargando órganos", error));
   }, []);
 
-
-
-/* Handle de evento modelo */
-async function handleModel(e){
-    e.preventDefault()
-    try {
-       var json = ""
-    } catch (error) {
-        console.log(error);
-        
-    }
- }
-
- /* e.taget.value es la fila de la grilla -- inx es el elemento */ 
- async function  handleOrganoChange(e, inx){
-  e.preventDefault()
-  try {
-
-    ///setIntervGrilla (intervGrilla => [...intervGrilla, {"organo": 2, "tejido" : false, "sangre" : true}]);
-
-
-    const fila = inx
-    const valor = e.target.value;
-    var opt;
-    
-    listOrganos.map((c, i) => {
-      if (c.code == valor)
-      {
-         opt = i
-      }
-    });
-    console.log("g valor", valor, "nuevo", opt); 
-    const newintervGrilla = intervGrilla.map((c, i) => {
-      if (i === fila) {
-       console.log("fila org", listOrganos, valor, listOrganos[opt].nombre)
-        c.organo = valor;
-        c.mtejido = false
-        c.mtejidovis = listOrganos[opt].mtejido
-        c.msangre = false
-        c.msangrevis = listOrganos[opt].msangre
-        c.tomo3d = false
-        c.tomo3dvis = listOrganos[opt].tomo3d
-
-        return c;
-      } else {
-        // The rest haven't changed
-        return c;
-      }
-    });
-    setIntervGrilla(newintervGrilla);
-
-
-
-     //console.log("option cambia=>", inx, "--", e.target.value)
-  } catch (error) {
-      console.log(error);
-      
-  }
-}
-
-async function handleOnChangeChecked(e, inx, campo){
-  //e.preventDefault()
-  try {
-    const fila = inx
-    //const opt = e.target.value;
-    const newintervGrilla = intervGrilla.map((c, i) => {
-      if (i === fila) {
-       // console.log("fila", i)
-        if (campo == 1) { c.mtejido = !c.mtejido }  
-        if (campo == 2) { c.msangre = !c.msangre }  
-        if (campo == 3) { c.tomo3d = !c.tomo3d }  
-        return c;
-      } else {
-        // The rest haven't changed
-        return c;
-      }
-    });
-    setIntervGrilla(newintervGrilla);
-  } catch (error) {
-      console.log(error);
-      
-  }
-}
- /* e.taget.value es la fila de la grilla -- inx es el elemento */ 
- async function  handleMedicaChange(e, inx){
-  e.preventDefault()
-  try {
-
-    ///setIntervGrilla (intervGrilla => [...intervGrilla, {"organo": 2, "tejido" : false, "sangre" : true}]);
-
-
-    const fila = inx
-    const opt = e.target.value;
-    const newintervGrilla = intervGrilla.map((c, i) => {
-      if (i === fila) {
-       // console.log("fila", i)
-        c.medica = opt;
-        return c;
-      } else {
-        // The rest haven't changed
-        return c;
-      }
-    });
-    setIntervGrilla(newintervGrilla);
-
-  } catch (error) {
-      console.log(error);
-      
-  }
-}
-
- async function handleaddRuta(e){
-  e.preventDefault()
-  try {
-
-   console.log("org 0-bis-", listOrganos);
-    setIntervGrilla (intervGrilla => [...intervGrilla, {"organo": listOrganos[0].code, "mtejido" : false, "mtejidovis" : listOrganos[0].mtejido, 
-               "msangre" : false, "msangrevis" : listOrganos[0].msangre, "tomo3d" : false, "tomo3dvis" : listOrganos[0].tomo3d, "medica" : 0}]);
-        
-  } 
-     
-  catch (error) {
-      console.log(error);
-      
-  }
-}
-
-
-
-async function handlePresup(e){
-  var errMessage = [];
-  var repOrg = [];  // organos repetidos
-  var orgRepetido = false;
-  var cost_total = 0;
-  var tiempo_total = 0;
-  var cantMedic = 0;
-  var almenos1 = false;
-  var sininterv = false;
-  if (nombpaciente === "")
-  { 
-     errMessage.push("Ingresar Paciente");
-  }
-  if (nombDoctor === "")
-  {
-    
-    errMessage.push("Ingresar Médico");  
-  } 
-  if (fechInterv === "")
-    {
-      
-      errMessage.push("Ingresar fecha de Intervención");  
-    } 
-      // la fecha debe estar en el futuro
-  else
-  {
-    var dfecInter = new Date(fechInterv);
-    var dhoy = new Date();
-    if (! (dfecInter > dhoy))
-    {
-      errMessage.push("La fecha de Intervención debe ser futura");  
-    } 
-  }
- 
-  if (intervGrilla.length < 1)
-    errMessage.push("Al menos cargar un órgano en la ruta");  
-
-// recorro la grilla de intervenciones
-
-    intervGrilla.map((c, i) => 
-    {
-      //verificar no se repitan los órganos
-      almenos1 = false;
-      if (repOrg.includes(c.organo))
-      {
-          orgRepetido = true
-      }
-      repOrg.push(c.organo)
-/* tejido */
-//if (vfilas[i].children[1].children[0].checked)
-      if(c.mtejido)
-      {
-        cost_total = cost_total + orgValores.tejido_costo;
-        tiempo_total = tiempo_total + orgValores.tejido_tiempo;
-        almenos1 = true;
-      }
-      if(c.msangre)
-      {
-        cost_total = cost_total + orgValores.sangre_costo;
-        tiempo_total = tiempo_total + orgValores.sangre_tiempo;
-        almenos1 = true;
-      }
-      if(c.tomo3d)
-        {
-          cost_total = cost_total + orgValores.tomo3d_costo;
-          tiempo_total = tiempo_total + orgValores.tomo3d_tiempo;
-          almenos1 = true;
+  // medicamentos
+  useEffect(() => {
+    fetch(`${API}/medica/traertodos`)
+      .then((response) => response.json())
+      .then((data) => {
+        if (Array.isArray(data) && data.length) {
+          setListMedica(data);
         }
+      })
+      .catch((error) => console.error("Error cargando medicación", error));
+  }, []);
 
-       // contabilizar medicamentos 
-       if ( c.medica != 0) 
-       {
-        cantMedic++;
-       }
+  //  ruta de órganos
 
-       if (!almenos1)
-       {
-        sininterv = true;
-       } 
-       
+  // arma una fila nueva de la ruta p el órgano indicado
+  function filaParaOrgano(organo, medica = 0) {
+    return {
+      organo: Number(organo.code),
+      mtejido: false,
+      mtejidovis: organo.mtejido,
+      msangre: false,
+      msangrevis: organo.msangre,
+      tomo3d: false,
+      tomo3dvis: organo.tomo3d,
+      medica,
+    };
+  }
+
+  function handleaddRuta() {
+    if (!listOrganos.length) {
+      mostrarToast("No hay órganos cargados");
+      return;
+    }
+    setIntervGrilla((grilla) => [...grilla, filaParaOrgano(listOrganos[0])]);
+  }
+
+  function handleOrganoChange(e, fila) {
+    const organo = listOrganos.find((o) => String(o.code) === e.target.value);
+    if (!organo) return;
+    setIntervGrilla(intervGrilla.map((c, i) =>
+      i === fila ? filaParaOrgano(organo, c.medica) : c
+    ));
+  }
+
+  // campo: tejido|sangre|tomo3D
+  function handleOnChangeChecked(fila, campo) {
+    setIntervGrilla(intervGrilla.map((c, i) =>
+      i === fila ? { ...c, [campo]: !c[campo] } : c
+    ));
+  }
+
+  function handleMedicaChange(e, fila) {
+    const medica = Number(e.target.value);
+    setIntervGrilla(intervGrilla.map((c, i) =>
+      i === fila ? { ...c, medica } : c
+    ));
+  }
+
+  function handleEliminar(fila) {
+    setIntervGrilla(intervGrilla.filter((_, i) => i !== fila));
+  }
+
+  // presupuesto
+
+  // calcula costo, tiempo y errores; devuelve el resultado para poder usarlo 
+  function calcularPresupuesto() {
+    const errores = [];
+    let costo = 0;
+    let tiempo = 0;
+    let cantMedic = 0;
+    let orgRepetido = false;
+    let sininterv = false;
+    const repOrg = [];
+
+    if (nombpaciente === "") errores.push("Ingresar Paciente");
+    if (nombDoctor === "") errores.push("Ingresar Médico");
+
+    if (fechInterv === "") {
+      errores.push("Ingresar fecha de Intervención");
+    } else if (!(new Date(fechInterv) > new Date())) {
+      errores.push("La fecha de Intervención debe ser futura");
+    }
+
+    if (intervGrilla.length < 1) errores.push("Al menos cargar un órgano en la ruta");
+
+    intervGrilla.forEach((c) => {
+      let almenos1 = false;
+
+      if (repOrg.includes(c.organo)) orgRepetido = true;
+      repOrg.push(c.organo);
+
+      if (c.mtejido) {
+        costo += orgValores.tejido_costo || 0;
+        tiempo += orgValores.tejido_tiempo || 0;
+        almenos1 = true;
+      }
+      if (c.msangre) {
+        costo += orgValores.sangre_costo || 0;
+        tiempo += orgValores.sangre_tiempo || 0;
+        almenos1 = true;
+      }
+      if (c.tomo3d) {
+        costo += orgValores.tomo3d_costo || 0;
+        tiempo += orgValores.tomo3d_tiempo || 0;
+        almenos1 = true;
+      }
+
+      if (Number(c.medica) !== 0) cantMedic++;
+      if (!almenos1) sininterv = true;
     });
 
-    if (sininterv)
-    {
-      errMessage.push("Órgano sin ninguna intervención");  
-    }
-    if (orgRepetido)
-       errMessage.push("Órganos repetidos en la ruta");  
-    if (cantMedic > 2)
-       errMessage.push("Más de 2 medicaciones seleccionadas");  
-   
-    setPresupCosto(cost_total);
-    setPresupTiempo(tiempo_total);
-  setPresupErrMessage(errMessage);
-}
+    if (sininterv) errores.push("Órgano sin ninguna intervención");
+    if (orgRepetido) errores.push("Órganos repetidos en la ruta");
+    if (cantMedic > 2) errores.push("Más de 2 medicaciones seleccionadas");
 
-async function handleConfirm(e){
-  handlePresup();
-  console.log("--", presupErrMessage.length);
-  if (presupErrMessage.length == 0)
-  {
-        var jstring;
-      var url;
-      e.preventDefault()
-      try {
+    setPresupCosto(costo);
+    setPresupTiempo(tiempo);
+    setPresupErrMessage(errores);
 
-        // preparar json
-        jstring = '{"paciente" : ' + codpaciente + ', "doctor" : ' + coddoctor + ', "fecint" : "' + fechInterv + '" , "costo" : ' + presupCosto + ', "tiempo" : ' + presupTiempo + ', "ruta" : [' ;
-        intervGrilla.map((c, i) => 
-          {
-           
-            if (i > 0)
-              {
-                jstring = jstring + ', ';
-                console.log("dentro", i);
-              }            
-            jstring = jstring + '{ "organo" : ' + c.organo + ', "mtejido" : ' + c.mtejido + ', "msangre" : ' + c.msangre  + ', "tomo3d"  : ' + c.tomo3d + ', "medica" :  ' +  c.medica + '}'
-
-
-          });
-          jstring = jstring + '] }';
-          url = "http://localhost:8080/robiotics/interv/addnew";
-         
-          console.log("interv", jstring);
-    /* fetch de búsqueda */
-    var options = {
-      method: 'POST',
-      headers: {
-      'Content-Type': 'application/json'
-      },
-      mode: 'cors',
-      credential : 'include',
-      body:  jstring,
-      //JSON.stringify({"code" : 4, "activo" : true}),
-      
-      };
-
-    fetch(url, options)
-    .then( response => response.json())
-    .then( data => {
-      
-        console.log("ruta add new", data)     
-        setTextoToast("Datos de intervención guardados");
-        setShowToast(true);  
-      
-    })
-
-
-      } catch (error) {
-          console.log(error);
-          setTextoToast("Error grabando datos de intervención");
-        setShowToast(true);  
-          
-      }
+    return { errores, costo, tiempo };
   }
-  
-}
 
+  function handlePresup() {
+    calcularPresupuesto();
+  }
 
-async function handleEliminar(e, ind){
-  const fila = ind
-  const opt = e.target.value;
-  var i;
-  try {
-    console.log("grilla filas", intervGrilla.length );
-    const newintervGrilla = [];
-    for(i=0; i < intervGrilla.length; i++)
-    {
-      if (i != fila) {
-        newintervGrilla.push(intervGrilla[i])
-      }
+  async function handleConfirm() {
+    const { errores, costo, tiempo } = calcularPresupuesto();
+    if (errores.length > 0) return;
 
-    }
-      console.log("grilla nueva", newintervGrilla)
-      setIntervGrilla(newintervGrilla);
+    const body = {
+      paciente: codpaciente,
+      doctor: coddoctor,
+      fecint: fechInterv,
+      costo,
+      tiempo,
+      ruta: intervGrilla.map((c) => ({
+        organo: Number(c.organo),
+        mtejido: c.mtejido,
+        msangre: c.msangre,
+        tomo3d: c.tomo3d,
+        medica: Number(c.medica),
+      })),
+    };
 
+    try {
+      const response = await fetch(`${API}/interv/addnew`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        mode: "cors",
+        credentials: "include",
+        body: JSON.stringify(body),
+      });
+      const data = await response.json();
+      console.log("ruta add new", data);
+      mostrarToast("Datos de intervención guardados");
     } catch (error) {
-      console.log(error);
-      
+      console.error(error);
+      mostrarToast("Error grabando datos de intervención");
     }
-}
+  }
 
+  // búsqueda d paciente
 
-
-/* Abrir ventana de búsqueda */
-async function handleSearchShow(e){
-  e.preventDefault()
-  try {
+  function handleSearchShow() {
     setSearchCodigo("");
-    setSearchNombre("")  ;
+    setSearchNombre("");
     setSearchActivo(false);
     setSearchGrilla([]);
-    
-
-    setNotEditable(true)
-     setVermodal(true)
-  } catch (error) {
-      console.log(error);
-      
+    setSearchMessage("");
+    setVermodal(true);
   }
-}
 
-/* Cerrar / cancelar ventana de búsqueda */
-
-async function handleSearchClose(e){
-  e.preventDefault()
-  try {
-    setVermodal(false)
-  } catch (error) {
-      console.log(error);
-      
+  function handleSearchClose() {
+    setVermodal(false);
   }
-}
 
-
-/* cuando se hace click sobre alguno de los pacientes de la grilla de búsqueda */
-
-async function handlepacSelected(fila){
-  
-  try {
-    
-    
-    setCodpaciente(searchgrilla[fila].code );
-    setNombpaciente(searchgrilla[fila].nombre + ' ' + searchgrilla[fila].apellido);
-    
-   
-    setVermodal(false)
-  } catch (error) {
-      console.log(error);
-      
+  function handlepacSelected(fila) {
+    const p = searchgrilla[fila];
+    setCodpaciente(p.code);
+    setNombpaciente(`${p.nombre} ${p.apellido}`);
+    setVermodal(false);
   }
-}
 
-/* Ejecutar la búsqueda en el backend y completar la grilla */
-async function handlesearchPac(e){
-  var msgactivo;
-  var jstring;
-  var url;
-  const params = new URLSearchParams();
-  e.preventDefault()
-  try {
-    if (searchactivo)
-      { 
-       msgactivo = '"activo" : false'
-      }
-      else {
-       msgactivo = '"activo" : true'
-      }  
-    if (searchcodigo)
-      {
-        jstring = '{ "code" : "' + searchcodigo +  '", "token" : "' + props.vtoken + '", ' + msgactivo +  '}';
-       params.append('code', searchcodigo);
-       params.append('token', props.vtoken);
-       params.append('msg', msgactivo);
-        url = "http://localhost:8080/robiotics/pac/findcode";
-      }
-      else
-      {
-        if (searchnombre)
-        {
-          jstring = '{ "nombre" : "' + searchnombre + '", '+ msgactivo +  '}';
-          params.append('nombre', searchnombre);
-          params.append('msg', msgactivo);
-          url = "http://localhost:8080/robiotics/pac/findname";
-    
-        }
-        else
-        {
-          jstring = '{'+ msgactivo + '}';
-          params.append('msg', msgactivo);
-          url = "http://localhost:8080/robiotics/pac/findall";
-    
-        }
-    
-      }
-
-
-
-/* fetch de búsqueda */
-/*
-var options = {
-  method: 'POST',
-  headers: {
-  'Content-Type': 'application/json'
-  },
-  mode: 'cors',
-  credential : 'include',
-  body:  jstring,
-  //JSON.stringify({"code" : 4, "activo" : true}),
-  
-  };
-*/
-fetch(`${url}?${params}`)
-.then( response => response.json())
-.then( data => {
-  
-    setSearchGrilla(data.data);
-    if (! data.data.length)
-    {
-      setSearchMessage("No hay coincidencias");
-
-    }          
-  
-})
-
-
-  } catch (error) {
-      console.log(error);
-      
+  function handleOnChangeActivo() {
+    setSearchActivo(!searchactivo);
+    setSearchMessage("");
   }
-}
 
+  async function handlesearchPac() {
+    const params = new URLSearchParams();
+    const msgactivo = searchactivo ? '"activo" : false' : '"activo" : true';
+    let url;
 
-async function    handleOnChangeActivo(e){
-  setSearchActivo(!searchactivo); 
-  setSearchMessage("");
-}
+    if (searchcodigo) {
+      url = `${API}/pac/findcode`;
+      params.append("code", searchcodigo);
+      params.append("token", props.vtoken);
+      params.append("msg", msgactivo);
+    } else if (searchnombre) {
+      url = `${API}/pac/findname`;
+      params.append("nombre", searchnombre);
+      params.append("msg", msgactivo);
+    } else {
+      url = `${API}/pac/findall`;
+      params.append("msg", msgactivo);
+    }
 
-/* Abrir ventana de búsqueda */
-async function handleSearchDocShow(e){
-  e.preventDefault()
-  try {
+    try {
+      const response = await fetch(`${url}?${params}`);
+      const data = await response.json();
+      const lista = Array.isArray(data.data) ? data.data : [];
+      setSearchGrilla(lista);
+      if (!lista.length) setSearchMessage("No hay coincidencias");
+    } catch (error) {
+      console.error(error);
+      setSearchGrilla([]);
+      setSearchMessage("Error al buscar pacientes");
+    }
+  }
+
+  // búsqueda de médico 
+
+  function handleSearchDocShow() {
     setSearchDocCodigo("");
-    setSearchDocNombre("")  ;
+    setSearchDocNombre("");
     setSearchDocActivo(false);
     setSearchDocGrilla([]);
-    
-    setNotEditable(true)
-     setVermodalDoc(true)
-  } catch (error) {
-      console.log(error);
-      
+    setSearchDocMessage("");
+    setVermodalDoc(true);
   }
-}
 
-/* Cerrar / cancelar ventana de búsqueda */
-
-async function handleSearchDocClose(e){
-  e.preventDefault()
-  try {
-    setVermodalDoc(false)
-  } catch (error) {
-      console.log(error);
-      
+  function handleSearchDocClose() {
+    setVermodalDoc(false);
   }
-}
 
-
-/* cuando se hace click sobre alguno de los doctores de la grilla de búsqueda */
-
-async function handleDocSelected(fila){
-  
-  try {
-    
-    setCoddoctor(searchDocgrilla[fila].code);
-    setNombDoctor(searchDocgrilla[fila].nombre + ' ' + searchDocgrilla[fila].apellido);
-    
-   
-    setVermodalDoc(false)
-  } catch (error) {
-      console.log(error);
-      
+  function handleDocSelected(fila) {
+    const d = searchDocgrilla[fila];
+    setCoddoctor(d.code);
+    setNombDoctor(`${d.nombre} ${d.apellido}`);
+    setVermodalDoc(false);
   }
-}
 
-/* Ejecutar la búsqueda en el backend y completar la grilla */
-async function handlesearchDoc(e){
-  var msgactivo;
-  var jstring;
-  var url;
-  const params = new URLSearchParams();
-  e.preventDefault()
-  try {
-    if (searchactivo)
-      { 
-       msgactivo = '"activo" : false'
-      }
-      else {
-       msgactivo = '"activo" : true'
-      }  
-    if (searchDoccodigo)
-      {
-        jstring = '{ "code" : "' + searchDoccodigo +  '", "token" : "' + props.vtoken + '", ' + msgactivo +  '}';
-        params.append('code', searchcodigo);
-        params.append('token', props.vtoken);
-        params.append('msg', msgactivo);
-        url = "http://localhost:8080/robiotics/doctor/findcode";
-      }
-      else
-      {
-        if (searchDocnombre)
-        {
-          jstring = '{ "nombre" : "' + searchDocnombre + '", '+ msgactivo +  '}';
-          params.append('nombre', searchDocnombre);
-  params.append('msg', msgactivo);
-          url = "http://localhost:8080/robiotics/doctor/findname";
-    
-        }
-        else
-        {
-          jstring = '{'+ msgactivo + '}';
-         params.append('msg', msgactivo);
-          url = "http://localhost:8080/robiotics/doctor/findall";
-    
-        }
-    
-      }
-
-
-
-/* fetch de búsqueda */
-/*
-var options = {
-  method: 'POST',
-  headers: {
-  'Content-Type': 'application/json'
-  },
-  mode: 'cors',
-  credential : 'include',
-  body:  jstring,
-  //JSON.stringify({"code" : 4, "activo" : true}),
-  
-  };
-  */
-
-fetch(`${url}?${params}`)
-.then( response => response.json())
-.then( data => {
-    setSearchDocGrilla(data.data);
-    if (! data.data.length)
-    {
-      setSearchDocMessage("No hay coincidencias");
-
-    }          
-  
-})
-
-
-  } catch (error) {
-      console.log(error);
-      
+  function handleOnChangeDocActivo() {
+    setSearchDocActivo(!searchDocactivo);
+    setSearchDocMessage("");
   }
-}
 
+  async function handlesearchDoc() {
+    const params = new URLSearchParams();
+    const msgactivo = searchDocactivo ? '"activo" : false' : '"activo" : true';
+    let url;
 
-async function    handleOnChangeDocActivo(e){
-  setSearchDocActivo(!searchDocactivo); 
-  setSearchDocMessage("");
-}
+    if (searchDoccodigo) {
+      url = `${API}/doc/findcode`;
+      params.append("code", searchDoccodigo);
+      params.append("token", props.vtoken);
+      params.append("msg", msgactivo);
+    } else if (searchDocnombre) {
+      url = `${API}/doc/findname`;
+      params.append("nombre", searchDocnombre);
+      params.append("msg", msgactivo);
+    } else {
+      url = `${API}/doc/findall`;
+      params.append("msg", msgactivo);
+    }
 
+    try {
+      const response = await fetch(`${url}?${params}`);
+      const data = await response.json();
+      const lista = Array.isArray(data.data) ? data.data : [];
+      setSearchDocGrilla(lista);
+      if (!lista.length) setSearchDocMessage("No hay coincidencias");
+    } catch (error) {
+      console.error(error);
+      setSearchDocGrilla([]);
+      setSearchDocMessage("Error al buscar médicos");
+    }
+  }
 
+  // pantalla
 
-           return (
-               <div>
-                  
-                   <head>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous"/>
-  <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
-  <link rel="stylesheet" href="../public/css/stylePac.css"/>
-  
-  </head>
+  const labelClass = "form-label text-uppercase text-secondary fw-bold small";
+  const labelStyle = { fontSize: "0.75rem" };
 
-  <h5>Intervenciones</h5>
-  <div id="divtabcampos" class="container text-center mb-3">
-    <div class="row align-items-start mb-2">
-      <div class="col col-2 borde">
-          <button type="button" class="btn btn-primary" id="find" onClick={handleSearchShow} disabled={!noteditable} >Buscar Paciente</button>
+  return (
+    <div className="container-fluid py-4 px-4 bg-light min-vh-100">
+
+      // header superior
+      <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
+        <div>
+          <h3 className="fw-bold text-dark mb-1" style={{ letterSpacing: "-0.5px" }}>
+            Nueva Intervención
+          </h3>
+          <p className="text-muted small mb-0">
+            Registro y presupuesto de intervenciones del sistema Robiotics.
+          </p>
+        </div>
+        <span className="badge bg-primary px-3 py-2 rounded-pill fw-semibold">
+         <i className="bi bi-shield-check me-1"></i> Módulo Activo 
+        </span>
       </div>
-      <div class="col col-2 borde">
-        <label for="exampleFormControlInput1" id="nombpaciente" class="form-label">{nombpaciente}</label>
-      </div>
-    </div>
 
-    <div class="row align-items-start mb-2">
-      <div class="col col-2 borde">
-        <button type="button" class="btn btn-primary" id="find" onClick={handleSearchDocShow} disabled={!noteditable} >Buscar Médico</button>
-      </div>
-      <div class="col col-2 borde">
-        <label for="exampleFormControlInput1" id="nombdoctor" class="form-label">{nombDoctor}</label>
-      </div>
-    </div>
+      <div className="row justify-content-center">
+        <div className="col-12 col-xl-10">
 
-    <div class="row align-items-start mb-2 ">
-      <div class="col col-2 borde">
-         <label for="intervDate">Fecha Intervención:</label>
-      </div>
-      <div class="col col-2 borde">
-      <input id="intervDate" onChange={e => {setFechInterv(e.target.value)}} class="form-control" type="date" value={fechInterv} />
-      </div>
-    </div>
-   
-  </div>
-  
+ // tarjeta1: datos 
+          <div className="card border-0 shadow-sm rounded-3 bg-white mb-4">
+            <CabeceraTarjeta icono="bi-clipboard2-pulse" titulo="Datos de la Intervención"
+              subtitulo="Seleccione el paciente, el médico y la fecha" />
 
+            <div className="card-body p-4">
+              <div className="row g-3">
 
+                <div className="col-12 col-md-6">
+                  <label htmlFor="intPaciente" className={labelClass} style={labelStyle}>Paciente</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-light text-muted"><i className="bi bi-person"></i></span>
+                    <input type="text" id="intPaciente" className="form-control bg-light"
+                      value={nombpaciente} readOnly placeholder="Sin seleccionar" />
+                    <button type="button" className="btn btn-outline-primary" onClick={handleSearchShow}>
+                      <i className="bi bi-search me-1"></i>Buscar
+                    </button>
+                  </div>
+                </div>
 
+                <div className="col-12 col-md-6">
+                  <label htmlFor="intMedico" className={labelClass} style={labelStyle}>Médico</label>
+                  <div className="input-group">
+                    <span className="input-group-text bg-light text-muted"><i className="bi bi-person-badge"></i></span>
+                    <input type="text" id="intMedico" className="form-control bg-light"
+                      value={nombDoctor} readOnly placeholder="Sin seleccionar" />
+                    <button type="button" className="btn btn-outline-primary" onClick={handleSearchDocShow}>
+                      <i className="bi bi-search me-1"></i>Buscar
+                    </button>
+                  </div>
+                </div>
 
+                <div className="col-12 col-md-6">
+                  <label htmlFor="intervDate" className={labelClass} style={labelStyle}>Fecha de intervención</label>
+                  <input id="intervDate" type="date" className="form-control py-2"
+                    value={fechInterv} onChange={(e) => setFechInterv(e.target.value)} />
+                </div>
 
+              </div>
+            </div>
+          </div>
 
+          // tarjeta 2: ruta 
+          <div className="card border-0 shadow-sm rounded-3 bg-white mb-4">
+            <CabeceraTarjeta icono="bi-diagram-3" titulo="Ruta de Órganos"
+              subtitulo="Agregue los órganos y marque los estudios a realizar">
+              <button type="button" className="btn btn-primary fw-semibold"
+                style={{ backgroundColor: "#0284c7", borderColor: "#0284c7" }}
+                onClick={handleaddRuta}>
+                <i className="bi bi-plus-lg me-1"></i>Agregar órgano
+              </button>
+            </CabeceraTarjeta>
 
+            <div className="card-body p-4">
+              <div className="table-responsive">
+                <table className="table table-sm align-middle mb-0">
+                  <thead className="table-info">
+                    <tr>
+                      <th style={{ minWidth: "150px" }}>Órgano</th>
+                      <th className="text-center">Tejido</th>
+                      <th className="text-center">Sangre</th>
+                      <th className="text-center">Tomografía</th>
+                      <th style={{ minWidth: "150px" }}>Medicación</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {intervGrilla.length === 0 ? (
+                      <tr>
+                        <td colSpan="6" className="text-center text-muted py-3">
+                          Todavía no hay órganos en la ruta. Use “Agregar órgano”.
+                        </td>
+                      </tr>
+                    ) : (
+                      intervGrilla.map((fila, index) => (
+                        <tr key={index}>
+                          <td>
+                            <select className="form-select form-select-sm" aria-label="Órgano"
+                              value={fila.organo} onChange={(e) => handleOrganoChange(e, index)}>
+                              {listOrganos.map((o) => (
+                                <option key={o.code} value={o.code}>{o.nombre}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="text-center">
+                            {fila.mtejidovis
+                              ? <input type="checkbox" className="form-check-input" aria-label="Tejido"
+                                  checked={fila.mtejido} onChange={() => handleOnChangeChecked(index, "mtejido")} />
+                              : <span className="text-muted">—</span>}
+                          </td>
+                          <td className="text-center">
+                            {fila.msangrevis
+                              ? <input type="checkbox" className="form-check-input" aria-label="Sangre"
+                                  checked={fila.msangre} onChange={() => handleOnChangeChecked(index, "msangre")} />
+                              : <span className="text-muted">—</span>}
+                          </td>
+                          <td className="text-center">
+                            {fila.tomo3dvis
+                              ? <input type="checkbox" className="form-check-input" aria-label="Tomografía"
+                                  checked={fila.tomo3d} onChange={() => handleOnChangeChecked(index, "tomo3d")} />
+                              : <span className="text-muted">—</span>}
+                          </td>
+                          <td>
+                            <select className="form-select form-select-sm" aria-label="Medicación"
+                              value={fila.medica} onChange={(e) => handleMedicaChange(e, index)}>
+                              <option value={0}>Sin medicación</option>
+                              {listMedica.map((m) => (
+                                <option key={m.code} value={m.code}>{m.nombre}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td className="text-end">
+                            <button type="button" className="btn btn-outline-danger btn-sm"
+                              aria-label="Quitar órgano" title="Quitar órgano"
+                              onClick={() => handleEliminar(index)}>
+                              <i className="bi bi-trash"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      ))
+                    )}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
 
-<div id="divtabruta" class="container text-center mb-3">
-  <div class="row align-items-start mb-2 ">
-    <div class="col bg-info col-2 borde">
-      Órgano
-    </div>
-    <div class="col bg-info col-1 borde">
-      Tejido
-    </div>
-    <div class="col bg-info col-1 borde">
-      Sangre
-    </div>
-    <div class="col bg-info col-1 borde">
-      Tomografía
-    </div>
-    <div class="col bg-info col-2 borde">
-      Medicación
-    </div>
-    <div class="col bg-info col-2 borde">
-      &nbsp;
-    </div>
-  </div>
-  
-  {  intervGrilla.map (( unolista, index ) => (
-                    <>
-                    <div class="row align-items-start borde-primary mb-2" >
-                      <div key={index+'_1o'} class="col col-2 border-primary"> 
-                          <select name="organos" onChange={(evt) => handleOrganoChange(evt, index)} value= {unolista.organo}>
-                              {listOrganos.map((e, key) => {
-                                  return <option key={key} value={e.code}>{e.nombre}</option>;
-                              })}
-                          </select>
-                       </div>
-                      <div key={index+'_1te'} class="col col-1 border-primary">  {unolista.mtejidovis ?  <input type="checkbox" class="form-check-input" onChange={(evt) => handleOnChangeChecked(evt, index, 1)} checked={unolista.mtejido} /> : ''}  
-                        
-                        
-                        
-                      </div>
-                      <div key={index+'_1sa'} class="col col-1 border-primary">  {unolista.msangrevis ?  <input type="checkbox" class="form-check-input" onChange={(evt) => handleOnChangeChecked(evt, index, 2)} checked={unolista.msangre} /> : ''}  
-                         
-                      </div>
-                      <div key={index+'_1to'} class="col col-1 border-primary">  {unolista.tomo3dvis ?  <input type="checkbox" class="form-check-input" onChange={(evt) => handleOnChangeChecked(evt, index, 3)} checked={unolista.tomo3d} /> : ''}  
-                         
-                      </div>
-                      <div key={index+'_1me'} class="col col-2 border-primary"> 
-                          <select name="medicas" onChange={(evt) => handleMedicaChange(evt, index)} value= {unolista.medica}>
-                              <option key={0} selected value={0}> </option>
-                              {listMedica.map((e, key) => {
-                                  return <option key={key} value={e.code}>{e.nombre}</option>;
-                              })}
-                          </select>
-                       </div>
+          // tarjeta3: presupuesto
+          <div className="card border-0 shadow-sm rounded-3 bg-white mb-4">
+            <CabeceraTarjeta icono="bi-calculator" titulo="Presupuesto"
+              subtitulo="Calcule el costo y el tiempo antes de confirmar" />
 
-                       <div key={index+'_1bo'} class="col col-1 border-primary"> <button type="button" class="btn btn-primary" id="removerow" onClick={(evt) => handleEliminar(evt, index)} >Eliminar</button>
-                      </div> 
+            <div className="card-body p-4">
+              <div className="row g-3 mb-3">
+                <div className="col-6">
+                  <div className="p-3 bg-light rounded-3 border h-100">
+                    <div className={labelClass} style={labelStyle}>Costo</div>
+                    <div className="fs-3 fw-bold text-dark">$ {presupCosto.toLocaleString("es-AR")}</div>
+                  </div>
+                </div>
+                <div className="col-6">
+                  <div className="p-3 bg-light rounded-3 border h-100">
+                    <div className={labelClass} style={labelStyle}>Tiempo</div>
+                    <div className="fs-3 fw-bold text-dark">
+                      {presupTiempo.toLocaleString("es-AR")} <span className="fs-6 fw-semibold text-muted">min</span>
                     </div>
-            
-                   </>
-
-
-                  ))} 
-
-
-
-
-</div>
-
-<div id="divtabcampos" class="container text-center mb-3">
-    <div class="row align-items-start mb-2">
-      <div class="col col-2 borde">
-         <button type="button" class="btn btn-primary" id="rutaadd" onClick={handleaddRuta} >Ruta +</button>
-      </div>
-      <div class="col col-2 borde">
-         <button type="button" class="btn btn-primary" id="presup" onClick={handlePresup} >Presupuestar</button>
-      </div>
-      <div class="col col-2 borde">
-         <button type="button" class="btn btn-primary" id="presconfirm" onClick={handleConfirm} >Confirmar</button>
-      </div>
-    </div>
-
-    <div class="row align-items-start mb-2">
-      <div class="col col-2 borde">
-        <label for="exampleFormControlInput1" class="form-label">Costo:</label>
-      </div>
-      <div class="col col-2 borde">
-         <label for="exampleFormControlInput1" id="valcosto" class="form-label">{presupCosto}</label>
-      </div>
-    </div>
-    <div class="row align-items-start mb-2">
-      <div class="col col-2 borde">
-      <label for="exampleFormControlInput1" class="form-label">Tiempo:</label>
-      </div>
-      <div class="col col-2 borde">
-      <label for="exampleFormControlInput1" id="valtiempo" class="form-label">{presupTiempo}</label>
-      </div>
-    </div>
-
-    <div class="row   mb-2">
-       <div class="col col-3 borde  text-danger">
-          
-
-          {  presupErrMessage.map (( unolista ) => (
-                    <>
-                      <label class="form-label " id="err_message">{unolista}</label><br></br>
-            
-                   </>
-
-
-                  ))} 
-
-
-    </div>
-   
-  </div>
-  
-
-
-{ /* <!-- Ventana de búsqueda de pacientes //  add show d-block to the class for the modal login to show up-->  */ }
-
-<div class={vermodal ? 'modal fade show d-block' : 'modal fade'} id="pacSearchModal" data-show="true" tabIndex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="false">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="confirmModalLabel">Buscar paciente</h5>
-        
-      </div>
-             <div id="loginModalBody" class="modal-body">
-                <div class="form-group">
-                    <label for="InputCode">Código :</label>
-                    <input type="text" class="form-control" id="inpCode" aria-describedby="emailHelp" onChange={e => {setSearchCodigo(e.target.value); setSearchMessage("")}} value={searchcodigo}  placeholder=""/>
+                    {presupTiempo >= 60 && (
+                      <small className="text-muted">
+                        ({Math.floor(presupTiempo / 60)} h{presupTiempo % 60 > 0 ? ` ${presupTiempo % 60} min` : ""})
+                      </small>
+                    )}
+                  </div>
                 </div>
-                <div class="form-group">
-                    <label for="InputNombre">Nombre y Apellido:</label>
-                    <input type="text" class="form-control" id="inpNombre" onChange={e => {setSearchNombre(e.target.value); setSearchMessage("")}} value={searchnombre} placeholder=""/>
-                </div>
-                <div class="form-group">
-                  <label for="InputActivo">Incluir inactivos</label>&nbsp;
-                  <input type="checkbox" class="form-check-input" id="inpActivo" onChange={handleOnChangeActivo} checked={searchactivo} placeholder=""/>
-                </div>
-                <div class="form-group text-danger">
-                    <label id="log_message">{searchMessage}</label>
-                </div>
-               </div>
-          
-              <div class="modal-footer">
-                <button type="button" class="btn btn-primary"   onClick={handleSearchClose} data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" id="btnconfirm" data-bs-confirm="" onClick={handlesearchPac}  class="btn btn-primary">Buscar</button>
               </div>
 
+              {presupErrMessage.length > 0 && (
+                <div className="alert alert-danger mb-0" role="alert">
+                  <div className="fw-semibold mb-1">
+                    <i className="bi bi-exclamation-triangle me-1"></i>Revise lo siguiente:
+                  </div>
+                  <ul className="mb-0 ps-3">
+                    {presupErrMessage.map((msg) => <li key={msg}>{msg}</li>)}
+                  </ul>
+                </div>
+              )}
+            </div>
 
-            <div id="divtabpac" class="container text-center ml-2 mb-2">
-                    <div class="row align-items-start border-primary">
-                      <div class="col bg-info col-2 border-primary">
-                        Código
-                      </div>
-                      <div class="col bg-info col-5 border-primary">
-                        Nombre
-                      </div>
-                      <div class="col bg-info col-5 border-primary">
-                        Apellido
-                      </div>
-                    </div>
-
-                  {  searchgrilla.map (( unolista, index ) => (
-                    <>
-                    <div class="row align-items-start borde-primary" onClick={() => { handlepacSelected(index) }}>
-                      <div key={index+'_1p'} class="col col-2 border-primary"> {unolista.code} </div>
-                      <div key={index+'_2p'} class="col col-5 border-primary"> {unolista.nombre}</div>
-                      <div key={index+'_3p'} class="col col-5 border-primary"> {unolista.apellido}</div>
-
-
-                    </div>
-            
-                   </>
-
-
-                  ))} 
+            <div className="card-footer border-top bg-light p-3 p-md-4">
+              <div className="row g-2 justify-content-end">
+                <div className="col-6 col-md-auto">
+                  <button type="button" className="btn btn-outline-primary w-100 px-4 fw-semibold" onClick={handlePresup}>
+                    <i className="bi bi-calculator me-2"></i>Presupuestar
+                  </button>
+                </div>
+                <div className="col-6 col-md-auto">
+                  <button type="button" className="btn btn-success w-100 px-4 fw-semibold" onClick={handleConfirm}>
+                    <i className="bi bi-check-circle me-2"></i>Confirmar
+                  </button>
+                </div>
               </div>
+            </div>
+          </div>
 
-
-    </div>
-  </div>
-  </div>
-  </div>
-
-
-{ /* <!-- Ventana de búsqueda de doctores //  add show d-block to the class for the modal login to show up-->  */ }
-
-<div class={vermodalDoc ? 'modal fade show d-block' : 'modal fade'} id="docSearchModal" data-show="true" tabIndex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="false">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="confirmModalLabel">Buscar doctor</h5>
-        
+        </div>
       </div>
-             <div id="loginModalBody" class="modal-body">
-                <div class="form-group">
-                    <label for="InputCode">Código :</label>
-                    <input type="text" class="form-control" id="inpCode" aria-describedby="emailHelp" onChange={e => {setSearchDocCodigo(e.target.value); setSearchDocMessage("")}} value={searchDoccodigo}  placeholder=""/>
-                </div>
-                <div class="form-group">
-                    <label for="InputNombre">Nombre y Apellido:</label>
-                    <input type="text" class="form-control" id="inpNombre" onChange={e => {setSearchDocNombre(e.target.value); setSearchDocMessage("")}} value={searchDocnombre} placeholder=""/>
-                </div>
-                <div class="form-group">
-                  <label for="InputActivo">Incluir inactivos</label>&nbsp;
-                  <input type="checkbox" class="form-check-input" id="inpActivo" onChange={handleOnChangeDocActivo} checked={searchDocactivo} placeholder=""/>
-                </div>
-                <div class="form-group text-danger">
-                    <label id="log_message">{searchDocMessage}</label>
-                </div>
-               </div>
-          
-              <div class="modal-footer">
-                <button type="button" class="btn btn-primary"   onClick={handleSearchDocClose} data-bs-dismiss="modal">Cancelar</button>
-                <button type="button" id="btnconfirm" data-bs-confirm="" onClick={handlesearchDoc}  class="btn btn-primary">Buscar</button>
-              </div>
 
+      // modales 
+      {(vermodal || vermodalDoc) && <div className="modal-backdrop fade show"></div>}
 
-            <div id="divtabdoc" class="container text-center ml-2 mb-2">
-                    <div class="row align-items-start border-primary">
-                      <div class="col bg-info col-2 border-primary">
-                        Código
-                      </div>
-                      <div class="col bg-info col-5 border-primary">
-                        Nombre
-                      </div>
-                      <div class="col bg-info col-5 border-primary">
-                        Apellido
-                      </div>
-                    </div>
+      <ModalBusqueda
+        id="pacSearchModal" titulo="Buscar paciente" visible={vermodal}
+        codigo={searchcodigo} setCodigo={setSearchCodigo}
+        nombre={searchnombre} setNombre={setSearchNombre}
+        activo={searchactivo} onToggleActivo={handleOnChangeActivo}
+        mensaje={searchMessage} setMensaje={setSearchMessage}
+        grilla={searchgrilla} onBuscar={handlesearchPac}
+        onCerrar={handleSearchClose} onSeleccionar={handlepacSelected}
+      />
 
-                  {  searchDocgrilla.map (( unolista, index ) => (
-                    <>
-                    <div class="row align-items-start borde-primary" onClick={() => { handleDocSelected(index) }}>
-                      <div key={index+'_1d'} class="col col-2 border-primary"> {unolista.code} </div>
-                      <div key={index+'_2d'} class="col col-5 border-primary"> {unolista.nombre}</div>
-                      <div key={index+'_3d'} class="col col-5 border-primary"> {unolista.apellido}</div>
+      <ModalBusqueda
+        id="docSearchModal" titulo="Buscar médico" visible={vermodalDoc}
+        codigo={searchDoccodigo} setCodigo={setSearchDocCodigo}
+        nombre={searchDocnombre} setNombre={setSearchDocNombre}
+        activo={searchDocactivo} onToggleActivo={handleOnChangeDocActivo}
+        mensaje={searchDocMessage} setMensaje={setSearchDocMessage}
+        grilla={searchDocgrilla} onBuscar={handlesearchDoc}
+        onCerrar={handleSearchDocClose} onSeleccionar={handleDocSelected}
+      />
 
-
-                    </div>
-            
-                   </>
-
-
-                  ))} 
-              </div>
-
-
-    </div>
-  </div>
-  </div>
-
-
-
-<ToastContainer position="bottom-end">
+      // toast 
+      <ToastContainer position="bottom-end" className="p-3" style={{ zIndex: 1100 }}>
         <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide>
-          
           <Toast.Body>{textoToast}</Toast.Body>
         </Toast>
-        </ToastContainer>
+      </ToastContainer>
 
-
-
-
-    
-
-               </div>
-           );
- }
+    </div>
+  );
+};
 
 export default Intervnueva;
+Mostrando Intervbuscar.js
