@@ -5,7 +5,7 @@ const API = "http://localhost:8080/robiotics/doctor";
 
 const Doctores = (props) => {
 
-  // ficha del médico 
+  // ficha médico 
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
