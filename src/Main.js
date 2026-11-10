@@ -27,37 +27,59 @@ function Main() {
   </header>
   
 
-<div class="modal fade show d-block" id="loginModal" data-show="true" tabindex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="false">
-  <div class="modal-dialog" role="document">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h5 class="modal-title" id="confirmModalLabel">Ingreso al sistema:</h5>
-        <button type="button" class="close" data-bs-dismiss="modal" aria-label="Close">
-          <span aria-hidden="true">&times;</span>
-        </button>
-      </div>
-          <div id="loginModalBody" class="modal-body">
-              <div class="form-group">
-                  <label for="exampleInputEmail1">Usuario </label>
-                  <input type="email" class="form-control" id="inpUser" aria-describedby="emailHelp" placeholder="Ingrese su usuario"/>
-              </div>
-              <div class="form-group">
-                  <label for="exampleInputPassword1">Password</label>
-                  <input type="password" class="form-control" id="inpPwd" placeholder="Password"/>
-              </div>
-              <div class="form-group text-danger">
-                  <label id="log_message"></label>
-              </div>
-          </div>
-          <div class="modal-footer">
-            <button type="button" class="btn btn-primary" data-bs-dismiss="modal">Cancelar</button>
-            <button type="button" id="btnconfirm" data-bs-confirm="" onclick="loginTry()" class="btn btn-primary">Confirmar</button>
-          </div>
+{vermodallogin && <div className="modal-backdrop fade show"></div>}
 
+<div className={vermodallogin ? 'modal fade show d-block' : 'modal fade'}
+  id="loginModal" tabIndex="-1" role="dialog"
+  aria-labelledby="loginModalLabel" aria-hidden={!vermodallogin}>
+
+  <div className="modal-dialog modal-dialog-centered modal-fullscreen-sm-down" role="document">
+    <div className="modal-content">
+
+      <form onSubmit={e => { e.preventDefault(); handleLogin(); }}>
+
+        <div className="modal-header">
+          <h5 className="modal-title" id="loginModalLabel">Ingreso al sistema</h5>
+          <button type="button" className="btn-close" aria-label="Cerrar"
+            onClick={handleLoginClose}></button>
+        </div>
+
+        <div className="modal-body">
+          <div className="mb-3">
+            <label htmlFor="inpUser" className="form-label">Usuario</label>
+            <input type="text" className="form-control" id="inpUser"
+              placeholder="Ingrese su usuario" autoComplete="username"
+              value={usuario}
+              onChange={e => { setUsuario(e.target.value); setLoginMessage(""); }} />
+          </div>
+          <div className="mb-3">
+            <label htmlFor="inpPwd" className="form-label">Contraseña</label>
+            <input type="password" className="form-control" id="inpPwd"
+              placeholder="Contraseña" autoComplete="current-password"
+              value={password}
+              onChange={e => { setPassword(e.target.value); setLoginMessage(""); }} />
+          </div>
+          {loginMessage && (
+            <div className="text-danger small">{loginMessage}</div>
+          )}
+        </div>
+
+        <div className="modal-footer">
+          <div className="row g-2 w-100 justify-content-end m-0">
+            <div className="col-6 col-md-auto">
+              <button type="button" className="btn btn-secondary w-100"
+                onClick={handleLoginClose}>Cancelar</button>
+            </div>
+            <div className="col-6 col-md-auto">
+              <button type="submit" className="btn btn-primary w-100">Ingresar</button>
+            </div>
+          </div>
+        </div>
+
+      </form>
     </div>
   </div>
-</div>  
-
+</div>
 
 
 

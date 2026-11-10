@@ -5,8 +5,9 @@ import ToastContainer from "react-bootstrap/ToastContainer";
 
 const API = "http://localhost:8080/robiotics";
 
-// modal de búsqueda reutilizable (pacientes y médicos)
-   
+/* ============================================================
+   Modal de búsqueda reutilizable (pacientes y médicos)
+   ============================================================ */
 function ModalBusqueda({
   id, titulo, visible,
   codigo, setCodigo, nombre, setNombre,
@@ -88,7 +89,7 @@ function ModalBusqueda({
   );
 }
 
-// cabecera de c tarjeta (ícono + título + subtítulo)
+// Cabecera de cada tarjeta (ícono + título + subtítulo)
 function CabeceraTarjeta({ icono, titulo, subtitulo, children }) {
   return (
   <div className="card-header border-0 bg-white pt-4 px-4 pb-0">
@@ -107,18 +108,19 @@ function CabeceraTarjeta({ icono, titulo, subtitulo, children }) {
   );
 }
 
-// pantalla de nueva intervención
-
+/* ============================================================
+   Pantalla de nueva intervención
+   ============================================================ */
 const Intervnueva = (props) => {
 
-  // datos intervención 
+  // ----- Datos de la intervención -----
   const [codpaciente, setCodpaciente] = useState(0);
   const [nombpaciente, setNombpaciente] = useState("");
   const [coddoctor, setCoddoctor] = useState(0);
   const [nombDoctor, setNombDoctor] = useState("");
   const [fechInterv, setFechInterv] = useState("");
 
-  // búsqueda de paciente
+  // ----- Búsqueda de paciente -----
   const [vermodal, setVermodal] = useState(false);
   const [searchcodigo, setSearchCodigo] = useState("");
   const [searchnombre, setSearchNombre] = useState("");
@@ -126,7 +128,7 @@ const Intervnueva = (props) => {
   const [searchgrilla, setSearchGrilla] = useState([]);
   const [searchMessage, setSearchMessage] = useState("");
 
-  // búsqueda de médico
+  // ----- Búsqueda de médico -----
   const [vermodalDoc, setVermodalDoc] = useState(false);
   const [searchDoccodigo, setSearchDocCodigo] = useState("");
   const [searchDocnombre, setSearchDocNombre] = useState("");
@@ -134,18 +136,18 @@ const Intervnueva = (props) => {
   const [searchDocgrilla, setSearchDocGrilla] = useState([]);
   const [searchDocMessage, setSearchDocMessage] = useState("");
 
-  // catálogos
+  // ----- Catálogos -----
   const [listOrganos, setListOrganos] = useState([]);
   const [orgValores, setOrgValores] = useState({});
   const [listMedica, setListMedica] = useState([]);
 
-  // ruta y presupuesto 
+  // ----- Ruta y presupuesto -----
   const [intervGrilla, setIntervGrilla] = useState([]);
   const [presupErrMessage, setPresupErrMessage] = useState([]);
   const [presupCosto, setPresupCosto] = useState(0);
   const [presupTiempo, setPresupTiempo] = useState(0);
 
-  // toast (ventanita)
+  // ----- Toast -----
   const [showToast, setShowToast] = useState(false);
   const [textoToast, setTextoToast] = useState("");
 
@@ -154,9 +156,9 @@ const Intervnueva = (props) => {
     setShowToast(true);
   }
 
-  // carga de catálogos
+  /* ================= Carga de catálogos ================= */
 
-  // órganos y valores (costo y tiempo de cada estudio)
+  // Órganos y valores (costo / tiempo de cada estudio)
   useEffect(() => {
     fetch(`${API}/org/traertodos`)
       .then((response) => response.json())
@@ -169,7 +171,7 @@ const Intervnueva = (props) => {
       .catch((error) => console.error("Error cargando órganos", error));
   }, []);
 
-  // medicamentos
+  // Medicamentos
   useEffect(() => {
     fetch(`${API}/medica/traertodos`)
       .then((response) => response.json())
@@ -181,9 +183,9 @@ const Intervnueva = (props) => {
       .catch((error) => console.error("Error cargando medicación", error));
   }, []);
 
-  //  ruta de órganos
+  /* ================= Ruta de órganos ================= */
 
-  // arma una fila nueva de la ruta p el órgano indicado
+  // Arma una fila nueva de la ruta para el órgano indicado
   function filaParaOrgano(organo, medica = 0) {
     return {
       organo: Number(organo.code),
@@ -213,7 +215,7 @@ const Intervnueva = (props) => {
     ));
   }
 
-  // campo: tejido|sangre|tomo3D
+  // campo: "mtejido" | "msangre" | "tomo3d"
   function handleOnChangeChecked(fila, campo) {
     setIntervGrilla(intervGrilla.map((c, i) =>
       i === fila ? { ...c, [campo]: !c[campo] } : c
@@ -231,9 +233,10 @@ const Intervnueva = (props) => {
     setIntervGrilla(intervGrilla.filter((_, i) => i !== fila));
   }
 
-  // presupuesto
+  /* ================= Presupuesto ================= */
 
-  // calcula costo, tiempo y errores; devuelve el resultado para poder usarlo 
+  // Calcula costo, tiempo y errores. Devuelve el resultado para poder usarlo
+  // enseguida (el estado de React no se actualiza en el momento).
   function calcularPresupuesto() {
     const errores = [];
     let costo = 0;
@@ -331,7 +334,7 @@ const Intervnueva = (props) => {
     }
   }
 
-  // búsqueda d paciente
+  /* ================= Búsqueda de paciente ================= */
 
   function handleSearchShow() {
     setSearchCodigo("");
@@ -360,22 +363,20 @@ const Intervnueva = (props) => {
 
   async function handlesearchPac() {
     const params = new URLSearchParams();
-    const msgactivo = searchactivo ? '"activo" : false' : '"activo" : true';
     let url;
 
     if (searchcodigo) {
       url = `${API}/pac/findcode`;
       params.append("code", searchcodigo);
       params.append("token", props.vtoken);
-      params.append("msg", msgactivo);
     } else if (searchnombre) {
       url = `${API}/pac/findname`;
       params.append("nombre", searchnombre);
-      params.append("msg", msgactivo);
     } else {
       url = `${API}/pac/findall`;
-      params.append("msg", msgactivo);
     }
+    // El backend filtra los inactivos solo si recibe activo=true
+    if (!searchactivo) params.append("activo", "true");
 
     try {
       const response = await fetch(`${url}?${params}`);
@@ -390,7 +391,7 @@ const Intervnueva = (props) => {
     }
   }
 
-  // búsqueda de médico 
+  /* ================= Búsqueda de médico ================= */
 
   function handleSearchDocShow() {
     setSearchDocCodigo("");
@@ -419,22 +420,20 @@ const Intervnueva = (props) => {
 
   async function handlesearchDoc() {
     const params = new URLSearchParams();
-    const msgactivo = searchDocactivo ? '"activo" : false' : '"activo" : true';
     let url;
 
     if (searchDoccodigo) {
-      url = `${API}/doc/findcode`;
+      url = `${API}/doctor/findcode`;
       params.append("code", searchDoccodigo);
       params.append("token", props.vtoken);
-      params.append("msg", msgactivo);
     } else if (searchDocnombre) {
-      url = `${API}/doc/findname`;
+      url = `${API}/doctor/findname`;
       params.append("nombre", searchDocnombre);
-      params.append("msg", msgactivo);
     } else {
-      url = `${API}/doc/findall`;
-      params.append("msg", msgactivo);
+      url = `${API}/doctor/findall`;
     }
+    // El backend filtra los inactivos solo si recibe activo=true
+    if (!searchDocactivo) params.append("activo", "true");
 
     try {
       const response = await fetch(`${url}?${params}`);
@@ -449,7 +448,7 @@ const Intervnueva = (props) => {
     }
   }
 
-  // pantalla
+  /* ================= Pantalla ================= */
 
   const labelClass = "form-label text-uppercase text-secondary fw-bold small";
   const labelStyle = { fontSize: "0.75rem" };
@@ -457,7 +456,7 @@ const Intervnueva = (props) => {
   return (
     <div className="container-fluid py-4 px-4 bg-light min-vh-100">
 
-      // header superior
+      {/* Header superior */}
       <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
           <h3 className="fw-bold text-dark mb-1" style={{ letterSpacing: "-0.5px" }}>
@@ -467,15 +466,13 @@ const Intervnueva = (props) => {
             Registro y presupuesto de intervenciones del sistema Robiotics.
           </p>
         </div>
-        <span className="badge bg-primary px-3 py-2 rounded-pill fw-semibold">
-         <i className="bi bi-shield-check me-1"></i> Módulo Activo 
-        </span>
+
       </div>
 
       <div className="row justify-content-center">
         <div className="col-12 col-xl-10">
 
- // tarjeta1: datos 
+          {/* ================= Tarjeta 1: Datos ================= */}
           <div className="card border-0 shadow-sm rounded-3 bg-white mb-4">
             <CabeceraTarjeta icono="bi-clipboard2-pulse" titulo="Datos de la Intervención"
               subtitulo="Seleccione el paciente, el médico y la fecha" />
@@ -517,7 +514,7 @@ const Intervnueva = (props) => {
             </div>
           </div>
 
-          // tarjeta 2: ruta 
+          {/* ================= Tarjeta 2: Ruta ================= */}
           <div className="card border-0 shadow-sm rounded-3 bg-white mb-4">
             <CabeceraTarjeta icono="bi-diagram-3" titulo="Ruta de Órganos"
               subtitulo="Agregue los órganos y marque los estudios a realizar">
@@ -602,7 +599,7 @@ const Intervnueva = (props) => {
             </div>
           </div>
 
-          // tarjeta3: presupuesto
+          {/* ================= Tarjeta 3: Presupuesto ================= */}
           <div className="card border-0 shadow-sm rounded-3 bg-white mb-4">
             <CabeceraTarjeta icono="bi-calculator" titulo="Presupuesto"
               subtitulo="Calcule el costo y el tiempo antes de confirmar" />
@@ -661,7 +658,7 @@ const Intervnueva = (props) => {
         </div>
       </div>
 
-      // modales 
+      {/* ================= Modales ================= */}
       {(vermodal || vermodalDoc) && <div className="modal-backdrop fade show"></div>}
 
       <ModalBusqueda
@@ -684,7 +681,7 @@ const Intervnueva = (props) => {
         onCerrar={handleSearchDocClose} onSeleccionar={handleDocSelected}
       />
 
-      // toast 
+      {/* ================= Toast ================= */}
       <ToastContainer position="bottom-end" className="p-3" style={{ zIndex: 1100 }}>
         <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide>
           <Toast.Body>{textoToast}</Toast.Body>
@@ -696,4 +693,3 @@ const Intervnueva = (props) => {
 };
 
 export default Intervnueva;
-Mostrando Intervbuscar.js

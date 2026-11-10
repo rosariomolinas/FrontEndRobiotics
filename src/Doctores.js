@@ -1,11 +1,12 @@
 // Doctores.js
 import React, { useState, useEffect } from "react";
 
+// Misma ruta que usan Intervnueva e Intervbuscar
 const API = "http://localhost:8080/robiotics/doctor";
 
 const Doctores = (props) => {
 
-  // ficha médico 
+  // ----- Ficha del médico -----
   const [codigo, setCodigo] = useState("");
   const [nombre, setNombre] = useState("");
   const [apellido, setApellido] = useState("");
@@ -14,7 +15,7 @@ const Doctores = (props) => {
   const [noteditable, setNotEditable] = useState(true);
   const [errores, setErrores] = useState({});
 
-  // ventana búsqueda 
+  // ----- Ventana de búsqueda -----
   const [vermodal, setVermodal] = useState(false);
   const [searchcodigo, setSearchCodigo] = useState("");
   const [searchnombre, setSearchNombre] = useState("");
@@ -22,14 +23,14 @@ const Doctores = (props) => {
   const [searchgrilla, setSearchGrilla] = useState([]);
   const [searchMessage, setSearchMessage] = useState("");
 
-  // ventana confirmación
+  // ----- Ventana de confirmación -----
   const [vermodalconf, setVermodalConf] = useState(false);
 
-  // toast (ventanita)
+  // ----- Toast -----
   const [showToast, setShowToast] = useState(false);
   const [textoToast, setTextoToast] = useState("");
 
-  // toast se cierra a los 3 segundos
+  // El toast se oculta solo a los 3 segundos
   useEffect(() => {
     if (!showToast) return;
     const t = setTimeout(() => setShowToast(false), 3000);
@@ -41,12 +42,13 @@ const Doctores = (props) => {
     setShowToast(true);
   }
 
-  // carga en el formulario un médico que vino del back
+  // Carga en el formulario un médico que vino del backend
   function cargarDoctor(p) {
     if (!p) return;
     setCodigo(p.code ?? "");
     setNombre(p.nombre ?? "");
     setApellido(p.apellido ?? "");
+    // Algunos médicos viejos tienen la matrícula en "nromatricula"
     setMatricula(p.matricula ?? p.nromatricula ?? "");
     setActivo(!!p.activo);
   }
@@ -60,7 +62,7 @@ const Doctores = (props) => {
     setErrores({});
   }
 
-  // validación 
+  /* ================= Validación ================= */
 
   const SOLO_LETRAS = /^[A-Za-zÁÉÍÓÚÜÑáéíóúüñ' -]+$/;
 
@@ -79,7 +81,7 @@ const Doctores = (props) => {
     return null;
   }
 
-  // true si todo está bien; si no, marca campos con error
+  // Devuelve true si todo está bien; si no, marca los campos con error
   function validarFicha() {
     const e = {};
     const errNombre = validarTexto(nombre, "nombre");
@@ -92,7 +94,7 @@ const Doctores = (props) => {
     return Object.keys(e).length === 0;
   }
 
-  // cuando se escribe en un campo se borra mensaje de error
+  // Al escribir en un campo se borra su mensaje de error
   function cambiarCampo(setter, campo) {
     return (e) => {
       setter(e.target.value);
@@ -100,14 +102,14 @@ const Doctores = (props) => {
     };
   }
 
-  // búsqueda 
+  /* ================= Búsqueda ================= */
 
   function handleOnChangeActivo() {
     setSearchActivo(!searchactivo);
     setSearchMessage("");
   }
 
-  // abrir ventana de búsqueda
+  /* Abrir ventana de búsqueda */
   function handleSearchShow() {
     setSearchCodigo("");
     setSearchNombre("");
@@ -119,18 +121,18 @@ const Doctores = (props) => {
     setVermodal(true);
   }
 
-  // cerrar / cancelar ventana de búsqueda 
+  /* Cerrar / cancelar ventana de búsqueda */
   function handleSearchClose() {
     setVermodal(false);
   }
 
-  // click sobre un médico de la grillar
+  /* Click sobre un médico de la grilla */
   function handleDocSelected(fila) {
     cargarDoctor(searchgrilla[fila]);
     setVermodal(false);
   }
 
-  // ejecutar la búsqueda en el back y completar la grilla
+  /* Ejecutar la búsqueda en el backend y completar la grilla */
   async function handlesearchDoc() {
     const params = new URLSearchParams();
     let url;
@@ -145,7 +147,7 @@ const Doctores = (props) => {
     } else {
       url = `${API}/findall`;
     }
-    // el back filtra los inactivos cuando recibe activo=true
+    // El backend filtra los inactivos solo si recibe activo=true
     if (!searchactivo) params.append("activo", "true");
 
     try {
@@ -161,7 +163,7 @@ const Doctores = (props) => {
     }
   }
 
-  // botones de la ficha 
+  /* ================= Botones de la ficha ================= */
 
   function handleNew() {
     limpiarFicha();
@@ -173,7 +175,7 @@ const Doctores = (props) => {
     setNotEditable(false);
   }
 
-  // eliminar el mostrar confirmación
+  /* Eliminar => mostrar confirmación */
   function handleRemove() {
     setVermodalConf(true);
   }
@@ -182,7 +184,7 @@ const Doctores = (props) => {
     setVermodalConf(false);
   }
 
-  // confirmac de eliminación
+  /* Confirmación de eliminación */
   async function handleConfirmEliminar() {
     setVermodalConf(false);
     if (!codigo) return;
@@ -205,7 +207,7 @@ const Doctores = (props) => {
     }
   }
 
-  // guardar (alta o modificación) 
+  /* Guardar (alta o modificación) */
   async function handleSave() {
     if (!validarFicha()) {
       mostrarToast("Revise los campos marcados en rojo");
@@ -239,7 +241,7 @@ const Doctores = (props) => {
       });
       const data = await response.json();
 
-      // error del backend (por ej, matrícula repetida): se muestra mensaje
+      // Error del backend (por ejemplo, matrícula repetida): se muestra su mensaje
       if (!response.ok) {
         if (response.status === 409) {
           setErrores((prev) => ({ ...prev, matricula: data.message }));
@@ -248,7 +250,7 @@ const Doctores = (props) => {
         return;
       }
 
-      // se recarga la ficha si el back devolvió un médico
+      // Solo se recarga la ficha si el backend devolvió un médico
       const p = Array.isArray(data.data) ? data.data[0] : null;
       if (p && p.code !== undefined) cargarDoctor(p);
       setNotEditable(true);
@@ -259,7 +261,7 @@ const Doctores = (props) => {
     }
   }
 
-  // cancelar edición vuelve a traer el registro desde el back
+  /* Cancelar edición: vuelve a traer el registro desde el backend */
   async function handleCancel() {
     setNotEditable(true);
     setErrores({});
@@ -284,14 +286,14 @@ const Doctores = (props) => {
     }
   }
 
-  // pantalla 
+  /* ================= Pantalla ================= */
 
   const labelStyle = { fontSize: "0.75rem" };
 
   return (
     <div className="container-fluid py-4 px-4 bg-light min-vh-100">
 
-      // header superior
+      {/* Header superior */}
       <div className="d-flex justify-content-between align-items-center mb-4 pb-2 border-bottom">
         <div>
           <h3 className="fw-bold text-dark mb-1" style={{ letterSpacing: "-0.5px" }}>
@@ -301,12 +303,10 @@ const Doctores = (props) => {
             Administración y registro de médicos del sistema Robiotics.
           </p>
         </div>
-        <span className="badge bg-primary px-3 py-2 rounded-pill fw-semibold">
-          <i className="bi bi-shield-check me-1"></i> Módulo Activo
-        </span>
+
       </div>
 
-      // tarjeta ppal
+      {/* Tarjeta principal */}
       <div className="row justify-content-center">
         <div className="col-12 col-xl-10">
           <div className="card border-0 shadow-sm rounded-3 overflow-hidden bg-white">
@@ -376,7 +376,7 @@ const Doctores = (props) => {
                   <div className="col-12 col-md-6 d-flex align-items-end">
                     <div className="form-check form-switch p-3 bg-light rounded-3 border w-100 d-flex align-items-center justify-content-between">
                       <label className="form-check-label fw-semibold text-dark mb-0 ms-2" htmlFor="activoSwitch">
-                        Estado activo en sistema
+                        Estado Activo en Sistema
                       </label>
                       <input className="form-check-input ms-0 fs-5" type="checkbox" role="switch"
                         id="activoSwitch" checked={activo} disabled readOnly />
@@ -387,7 +387,7 @@ const Doctores = (props) => {
               </form>
             </div>
 
-            // botonera
+            {/* Botonera */}
             <div className="card-footer border-top bg-light p-3 p-md-4">
               <div className="row g-2">
                 <div className="col-6 col-md-auto">
@@ -434,7 +434,7 @@ const Doctores = (props) => {
         </div>
       </div>
 
-      // modal de búsqueda 
+      {/* ================= Modal de búsqueda ================= */}
       {(vermodal || vermodalconf) && <div className="modal-backdrop fade show"></div>}
 
       <div className={vermodal ? "modal fade show d-block" : "modal fade"}
@@ -511,7 +511,7 @@ const Doctores = (props) => {
         </div>
       </div>
 
-      // modal de confirmación
+      {/* ================= Modal de confirmación ================= */}
       <div className={vermodalconf ? "modal fade show d-block" : "modal fade"}
         id="docConfModal" tabIndex="-1" role="dialog"
         aria-labelledby="confirmModalLabel" aria-hidden={!vermodalconf}>
@@ -540,7 +540,7 @@ const Doctores = (props) => {
         </div>
       </div>
 
-      // toast 
+      {/* ================= Toast ================= */}
       <div className="position-fixed bottom-0 end-0 p-3" style={{ zIndex: 1100 }}>
         <div className={showToast ? "toast show" : "toast"} role="status" aria-live="polite" aria-atomic="true">
           <div className="toast-body d-flex justify-content-between align-items-center">
@@ -556,4 +556,633 @@ const Doctores = (props) => {
 
 export default Doctores;
 
-Mostrando Doctores.js Página 1 de 1
+// // Pacientes.js
+
+// import { React, useState } from "react"
+// import Toast from 'react-bootstrap/Toast';
+// import ToastContainer from 'react-bootstrap/ToastContainer';
+
+
+// const Pacientes = (props) => {
+           
+//    const [codigo, setCodigo] = useState("")
+//    const [nombre, setNombre] = useState("")  
+//    const [apellido, setApellido] = useState("")  
+//    const [edad, setEdad] = useState("")  
+//    const [activo, setActivo] = useState(false)  
+//    const [noteditable, setNotEditable] = useState(true)
+
+//    // ventana de búsqueda
+//    const [vermodal, setVermodal] = useState(false)  
+//    const [searchcodigo, setSearchCodigo] = useState("")
+//    const [searchnombre, setSearchNombre] = useState("")  
+//    const [searchactivo, setSearchActivo] = useState(false)  
+//    const [searchgrilla, setSearchGrilla] = useState([])  
+//    const [searchMessage, setSearchMessage] = useState("")
+
+//    // ventana de confirmación
+//    const [vermodalconf, setVermodalConf] = useState(false)  
+
+// // toast
+//    const [showToast, setShowToast] = useState(false);
+//    const [textoToast, setTextoToast] = useState("");
+
+//    async function    handleOnChangeActivo(e){
+//     setSearchActivo(!searchactivo); 
+//     setSearchMessage("");
+//  }
+ 
+
+
+// /* Handle de evento modelo */
+//   async function handleModel(e){
+//    e.preventDefault()
+//    try {
+//       var json = ""
+//    } catch (error) {
+//        console.log(error);
+       
+//    }
+// }
+
+// /* Abrir ventana de búsqueda */
+// async function handleSearchShow(e){
+//   e.preventDefault()
+//   try {
+//     setSearchCodigo("");
+//     setSearchNombre("")  ;
+//     setSearchActivo(false);
+//     setSearchGrilla([]);
+    
+//     handleNew();
+//     setNotEditable(true)
+//      setVermodal(true)
+//   } catch (error) {
+//       console.log(error);
+      
+//   }
+// }
+
+// /* Cerrar / cancelar ventana de búsqueda */
+
+// async function handleSearchClose(e){
+//   e.preventDefault()
+//   try {
+//     setVermodal(false)
+//   } catch (error) {
+//       console.log(error);
+      
+//   }
+// }
+
+// /* cuando se hace click sobre alguno de los pacientes de la grilla de búsqueda */
+
+// async function handlepacSelected(fila){
+  
+//   try {
+    
+    
+
+//     setCodigo(searchgrilla[fila].code);
+//     setNombre(searchgrilla[fila].nombre);
+//     setApellido(searchgrilla[fila].apellido);
+//     setEdad(searchgrilla[fila].edad);
+//     setActivo(searchgrilla[fila].activo);
+   
+//     setVermodal(false)
+//   } catch (error) {
+//       console.log(error);
+      
+//   }
+// }
+
+// /* Ejecutar la búsqueda en el backend y completar la grilla */
+// async function handlesearchPac(e){
+//   var msgactivo;
+//   var jstring;
+//   var url;
+//   const params = new URLSearchParams();
+//   e.preventDefault()
+//   try {
+//     if (searchactivo)
+//       { 
+//        msgactivo = '"activo" : false'
+//       }
+//       else {
+//        msgactivo = '"activo" : true'
+//       }  
+//     if (searchcodigo)
+//       {
+//         jstring = '{ "code" : "' + searchcodigo +  '", "token" : "' + props.vtoken + '", ' + msgactivo +  '}';
+//         params.append('code', searchcodigo);
+//         params.append('token', props.vtoken);
+//         params.append('msg', msgactivo);
+//         console.log (jstring);
+//         url = "http://localhost:8080/robiotics/doc/findcode";
+//       }
+//       else
+//       {
+//         if (searchnombre)
+//         {
+//           jstring = '{ "nombre" : "' + searchnombre + '", '+ msgactivo +  '}';
+//           url = "http://localhost:8080/robiotics/doc/findname";
+//           params.append('nombre', searchnombre);
+//           params.append('msg', msgactivo);
+//         }
+//         else
+//         {
+//           jstring = '{'+ msgactivo + '}';
+//           url = "http://localhost:8080/robiotics/doc/findall";
+//           params.append('msg', msgactivo);
+//         }
+    
+//       }
+
+
+
+// /* fetch de búsqueda */
+// /*
+// var options = {
+//   method: 'POST',
+//   headers: {
+//   'Content-Type': 'application/json'
+//   },
+//   mode: 'cors',
+//   credential : 'include',
+//   body:  jstring,
+//   //JSON.stringify({"code" : 4, "activo" : true}),
+//   };
+//   */
+  
+
+// fetch(`${url}?${params}`)
+// .then( response => response.json())
+// .then( data => {
+//     setSearchGrilla(data.data);
+//     if (! data.data.length)
+//     {
+//       setSearchMessage("No hay coincidencias");
+
+//     }
+//   //setSearchNombre("Pepe");
+//   //setCodigo (json[0].code);    
+//   //setNombre (json[0].nombre);            
+  
+// })
+
+
+//   } catch (error) {
+//       console.log(error);
+      
+//   }
+// }
+
+
+
+//    async function handleNew(e){
+//     setCodigo("");
+//     setNombre("")  ;
+//     setApellido("");
+//     setEdad("");
+//     setNotEditable(false);
+//   }
+
+
+//   /* Editar */
+//   async function handleEdit(e){
+//     e.preventDefault()
+//     try {
+   
+//       setNotEditable(false);
+//     } catch (error) {
+//         console.log(error);
+        
+//     }
+//  }
+//   /* Remove => mostrar confirmación de eliminación */
+//   async function handleRemove(e){
+//     e.preventDefault()
+//     try {
+      
+//        setVermodalConf(true);
+//     } catch (error) {
+//         console.log(error);
+        
+//     }
+//  }
+
+
+//  /* confirmación de eliminación */
+//  async function handleConfirmEliminar (e){
+//   e.preventDefault()
+//   try {
+
+//     var jstring;
+//     var url;
+//     var json;
+//     e.preventDefault()
+//     try { 
+//       setNotEditable(true);
+//       if (codigo)
+//       { 
+//       jstring = '{ "code" : "' + codigo +  '"}';
+//       url = "http://localhost:8080/robiotics/doc/remove";
+
+
+//       var options = {
+//         method: 'POST',
+//         headers: {
+//         'Content-Type': 'application/json'
+//         },
+//         mode: 'cors',
+//         credential : 'include',
+//         body:  jstring,
+        
+//         };
+      
+//       fetch(url, options)
+//       .then( response => response.json())
+//       .then( data => {
+//          json = data.data;
+//         console.log(json[0].codigo);
+//         setCodigo (json[0].codigo);    
+//         setNombre (json[0].nombre);
+//         setApellido (json[0].apellido);            
+//         setEdad (json[0].edad);
+//         setActivo (json[0].actvo);
+//         setTextoToast("Paciente eliminado");
+//         setShowToast(true);
+//       })
+//     }
+
+
+//       /* traer los datos del registro que se estaba editado */
+      
+//     } catch (error) {
+//         console.log(error);
+        
+//     }
+
+
+
+
+//     setVermodalConf(false)
+//   } catch (error) {
+//       console.log(error);
+      
+//   }
+// }
+// async function handleConfirmClose(e){
+// e.preventDefault()
+// try {
+//   setVermodalConf(false)
+// } catch (error) {
+//     console.log(error);
+    
+// }
+// }
+
+
+
+//   /* Save */
+//   async function handleSave(e){
+
+//       var jstring;
+//       var url;
+//       var json;
+//       e.preventDefault()
+//       try { 
+//         setNotEditable(true);
+//         json = '"nombre" : "' + nombre + '", "apellido" : "' + apellido + '", "edad" : ' + edad + '}';
+//         if ( codigo )
+//         {
+//           json = '{ "code" : ' + codigo + ', ' + json;
+//           console.log(json);
+//           url = "http://localhost:8080/robiotics/doc/update";
+//         }
+//         else 
+//         {
+//           json = '{' + json;
+//           console.log(json);
+//           url = "http://localhost:8080/robiotics/doc/addnew";
+//         }
+  
+//         var options = {
+//           method: 'POST',
+//           headers: {
+//           'Content-Type': 'application/json'
+//           },
+//           mode: 'cors',
+//           credential : 'include',
+//           body:  json,
+          
+//           };
+        
+//         fetch(url, options)
+//         .then( response => response.json())
+//         .then( data => {
+          
+//            json = data.data;
+//            console.log(json);
+//           setCodigo (json[0].code);    
+//           setNombre (json[0].nombre);
+//           setApellido (json[0].apellido);            
+//           setEdad (json[0].edad);
+//           setActivo (json[0].actvo);
+
+// /* toast */
+// setTextoToast("Paciente guardado");
+// setShowToast(true);
+
+
+//         })
+//     } catch (error) {
+//         console.log(error);
+        
+//     }
+//  }
+
+//    /* Cancelar */
+//    async function handleCancel(e){
+//     var jstring;
+//     var url;
+//     var json;
+//     const params = new URLSearchParams();
+
+//     e.preventDefault()
+//     try { 
+//       setNotEditable(true);
+//       if (codigo)
+//       { 
+//         jstring = '{ "code" : "' + codigo +  '", "token" : "' + props.vtoken + '"}';
+//       //jstring = '{ "code" : "' + codigo +  '"}';
+//       url = "http://localhost:8080/robiotics/doc/findcode";
+
+// /*
+//       var options = {
+//         method: 'POST',
+//         headers: {
+//         'Content-Type': 'application/json'
+//         },
+//         mode: 'cors',
+//         credential : 'include',
+//         body:  jstring,
+        
+//         };
+//       */
+//       fetch(`${url}?${params}`)
+//       .then( response => response.json())
+//       .then( data => {
+//          json = data.data;
+//         console.log(json[0].codigo);
+//         setCodigo (json[0].codigo);    
+//         setNombre (json[0].nombre);
+//         setApellido (json[0].apellido);            
+//         setEdad (json[0].edad);
+//         setActivo (json[0].actvo);
+//       })
+//     }
+//     else {
+//       setNombre ("");
+//       setApellido ("");            
+//       setEdad ("");
+//     }
+
+
+//       /* traer los datos del registro que se estaba editado */
+      
+//     } catch (error) {
+//         console.log(error);
+        
+//     }
+//  }
+
+
+
+//            return (
+//                <div>
+
+
+
+// <head>
+//     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-EVSTQN3/azprG1Anm3QDgpJLIm9Nao0Yz1ztcQTwFspd3yD65VohhpuuCOmLASjC" crossorigin="anonymous"/>
+//   <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.9.2/dist/umd/popper.min.js" integrity="sha384-IQsoLXl5PILFhosVNubq5LC7Qb9DXgDA9i+tQ8Zj3iwWAwPtgFTxbJ8NT4GN1R8p" crossorigin="anonymous"></script>
+//   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.2/dist/js/bootstrap.min.js" integrity="sha384-cVKIPhGWiC2Al4u+LWgxfKTRIcfu0JTxR+EQDz/bgldoEyl4H0zUF0QKbrJ0EcQF" crossorigin="anonymous"></script>
+//   <link rel="stylesheet" href="../public/css/stylePac.css"/>
+  
+//   </head>
+
+//   <div id="divtabpac" class="container text-center ml-2 mb-2">
+//             <div class="row mb-12 border-primary">
+//                      <div class="col  col-1 text-end border-primary">
+//                       &nbsp;
+//                      </div>
+//               </div>
+
+//             <div class="row mb-1 border-primary">
+//               <div class="col col-1 text-end border-primary">
+                          
+//                         Código:
+//               </div>
+//               <div class="col  col-2 border-primary">
+
+//                      <input type="text" id="code" name="code" onChange={e => {setCodigo(e.target.value)}} value={codigo}  disabled={true}/> 
+//               </div>
+//            </div>
+//            <div class="row  mb-1 border-primary">
+//               <div class="col  col-1 text-end border-primary">
+//                      Nombre:
+//               </div>
+//               <div class="col  col-2 border-primary">
+//                      <input type="text" id="nombre" name="nombre" onChange={e => {setNombre(e.target.value)}}  value={nombre} disabled={noteditable}/> 
+//               </div>
+//             </div>
+//             <div class="row  mb-1 border-primary">
+//              <div class="col  col-1 text-end border-primary">
+//                      Apellido:
+//              </div>
+//              <div class="col  col-1 border-primary">
+
+//                      <input type="text" id="apellido" name="apellido" onChange={e => {setApellido(e.target.value)}}  value={apellido} disabled={noteditable}/> 
+//              </div>
+//              </div>
+//              <div class="row mb-1 border-primary">
+//                 <div class="col  col-1 text-end border-primary">
+//                      Edad:
+//                 </div>
+//                <div class="col  col-2 border-primary">
+//                      <input type="text" id="edad" name="edad" onChange={e => {setEdad(e.target.value)}}  value={edad} disabled={noteditable}/> 
+//               </div>
+//               <div class="col  col-1 text-end border-primary">
+//                      Activo:
+//                      </div>
+//                      <div class="col  col-1 text-start border-primary">
+//                      <input type="checkbox" id="activo" name="activo"  checked={activo} disabled={true}/> 
+//                      </div>
+//                      </div>
+//              <div class="row mb-12 border-primary">
+//                      <div class="col  col-1 text-end border-primary">
+//                       &nbsp;
+//                      </div>
+//               </div>
+
+//               <div class="row mb-1 border-primary">
+//                      <div class="col  col-1 text-center border-primary">
+
+//                        <button type="button" class="btn btn-primary" id="find" onClick={handleSearchShow} disabled={!noteditable} >Buscar</button>
+//                      </div>
+//                      <div class="col  col-1 text-center border-primary">
+//                        <button type="button" class="btn btn-primary"  id="clear" onClick={handleNew} disabled={!noteditable} >Nuevo</button>
+//                      </div>
+
+//                      <div class="col  col-1 text-center border-primary">
+//                      <button type="button" class="btn btn-primary" id="edit" onClick={handleEdit} disabled={!codigo}>Editar</button>
+//                      </div>
+//                      <div class="col  col-1 text-center border-primary">
+//                      <button type="button" class="btn btn-primary"  id="remove" onClick={handleRemove} disabled={!codigo}>Eliminar</button>
+//                      </div>
+
+//                      <div class="col  col-1 text-center border-primary">
+//                      <button type="button" class="btn btn-primary" id="grabar" onClick={handleSave} disabled={noteditable}>Guardar</button>
+//                      </div>
+//                      <div class="col  col-1 text-center border-primary">
+//                      <button type="button" class="btn btn-primary" id="cancelar" onClick={handleCancel} disabled={noteditable}>Cancelar</button>
+//                      </div>
+
+
+//               </div>
+
+//        </div>
+
+
+
+
+//       <ToastContainer position="bottom-end">
+//         <Toast onClose={() => setShowToast(false)} show={showToast} delay={3000} autohide>
+          
+//           <Toast.Body>{textoToast}</Toast.Body>
+//         </Toast>
+//         </ToastContainer>
+
+
+
+
+
+
+
+
+
+// { /* <!-- Ventana de búsqueda de pacientes //  add show d-block to the class for the modal login to show up -->  */ }
+
+// <div class={vermodal ? 'modal fade show d-block' : 'modal fade'} id="pacSearchModal" data-show="true" tabIndex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="false">
+//   <div class="modal-dialog" role="document">
+//     <div class="modal-content">
+//       <div class="modal-header">
+//         <h5 class="modal-title" id="confirmModalLabel">Buscar paciente</h5>
+        
+//       </div>
+//           <div id="loginModalBody" class="modal-body">
+//               <div class="form-group">
+//                   <label for="InputCode">Código :</label>
+//                   <input type="text" class="form-control" id="inpCode" aria-describedby="emailHelp" onChange={e => {setSearchCodigo(e.target.value); setSearchMessage("")}} value={searchcodigo}  placeholder=""/>
+//               </div>
+//               <div class="form-group">
+//                   <label for="InputNombre">Nombre y Apellido:</label>
+//                   <input type="text" class="form-control" id="inpNombre" onChange={e => {setSearchNombre(e.target.value); setSearchMessage("")}} value={searchnombre} placeholder=""/>
+//               </div>
+//               <div class="form-group">
+//                 <label for="InputActivo">Incluir inactivos</label>&nbsp;
+//                 <input type="checkbox" class="form-check-input" id="inpActivo" onChange={handleOnChangeActivo} checked={searchactivo} placeholder=""/>
+//             </div>
+//               <div class="form-group text-danger">
+//                   <label id="log_message">{searchMessage}</label>
+//               </div>
+//           </div>
+//           <div class="modal-footer">
+//             <button type="button" class="btn btn-primary"   onClick={handleSearchClose} data-bs-dismiss="modal">Cancelar</button>
+//             <button type="button" id="btnconfirm" data-bs-confirm="" onClick={handlesearchPac}  class="btn btn-primary">Buscar</button>
+//           </div>
+//           <div id="divtabpac" class="container text-center ml-2 mb-2">
+//             <div class="row align-items-start border-primary">
+//               <div class="col bg-info col-2 border-primary">
+//                 Código
+//               </div>
+//               <div class="col bg-info col-5 border-primary">
+//                 Nombre
+//               </div>
+//               <div class="col bg-info col-5 border-primary">
+//                 Apellido
+//               </div>
+//             </div>
+//            {  searchgrilla.map (( unolista, index ) => (
+//             <>
+//             <div class="row align-items-start borde-primary" onClick={() => { handlepacSelected(index) }}>
+//               <div key={index+'_1'} class="col col-2 border-primary"> {unolista.code} </div>
+//               <div key={index+'_2'} class="col col-5 border-primary"> {unolista.nombre}</div>
+//               <div key={index+'_3'} class="col col-5 border-primary"> {unolista.apellido}</div>
+
+
+//             </div>
+            
+//             </>
+
+
+//            ))} 
+//           </div>
+
+
+//     </div>
+//   </div>
+// </div>  
+
+
+// { /* <!-- Ventana de confirmación para eliminar/desactivar -->  */ }
+
+// <div class={vermodalconf ? 'modal fade show d-block' : 'modal fade'} id="pacConfModal" data-show="true" tabIndex="-1" role="dialog" aria-labelledby="loginModalLabel" aria-hidden="false">
+//   <div class="modal-dialog" role="document">
+//     <div class="modal-content">
+     
+//       <div class="modal-header">
+//         <h5 class="modal-title" id="confirmModalLabel">¿Eliminar paciente?</h5>
+        
+//       </div>
+
+//             <div class="modal-footer">
+//               <button type="button" class="btn btn-primary"   onClick={handleConfirmClose} data-bs-dismiss="modal">Cancelar</button>
+//               <button type="button" id="btnconfirm" data-bs-confirm="" onClick={handleConfirmEliminar}  class="btn btn-primary">Confirmar</button>
+//             </div>
+            
+//           </div>
+
+
+//     </div>
+//   </div>
+
+
+// <div class="toast-container position-fixed bottom-0 end-0 p-3">
+//   <div id="liveToastmsg" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
+
+//     <div class="toast-body">
+      
+//     </div>
+//   </div>
+// </div>
+
+
+
+
+
+
+
+
+
+
+
+
+
+//                </div>
+//            );
+//    };
+
+// export default Pacientes;
+
